@@ -44,15 +44,13 @@ func astForObject(objectDefinition spec.ObjectDefinition, info types.PkgInfo) ([
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to create type provider for field %s for object %s",
 				fieldDefinition.FieldName,
-				objectDefinition.TypeName.Name,
-			)
+				objectDefinition.TypeName.Name)
 		}
 		typer, err := conjureTypeProvider.ParseType(info)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to parse type field %s for object %s",
 				fieldDefinition.FieldName,
-				objectDefinition.TypeName.Name,
-			)
+				objectDefinition.TypeName.Name)
 		}
 		info.AddImports(typer.ImportPaths()...)
 
