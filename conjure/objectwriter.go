@@ -146,49 +146,52 @@ func astForStructJSONMarshal(objectDefinition spec.ObjectDefinition, info types.
 }
 
 func astForStructJSONUnmarshal(objectDefinition spec.ObjectDefinition, info types.PkgInfo) (astgen.ASTDecl, error) {
-	var body []astgen.ASTStmt
-	aliasTypeName := objectDefinition.TypeName.Name + "Alias"
-	body = append(body, statement.NewDecl(
-		&decl.Alias{
-			Name: aliasTypeName,
-			Type: expression.Type(objectDefinition.TypeName.Name),
-		},
-	))
-
-	rawVarName := fmt.Sprint("raw", objectDefinition.TypeName.Name)
-	body = append(body, statement.NewDecl(
-		decl.NewVar(rawVarName, expression.Type(aliasTypeName)),
-	))
-
-	info.AddImports(types.SafeJSONUnmarshal.ImportPaths()...)
-	body = append(body, ifErrNotNilReturnErrStatement("err",
-		statement.NewAssignment(
-			expression.VariableVal("err"),
-			token.DEFINE,
-			&expression.CallExpression{
-				Function: expression.Type(types.SafeJSONUnmarshal.GoType(info)),
-				Args: []astgen.ASTExpr{
-					expression.VariableVal(dataVarName),
-					expression.NewUnary(token.AND, expression.VariableVal(rawVarName)),
-				},
-			},
-		),
-	))
-
-	marshalInit, err := structMarshalInitDecls(objectDefinition, rawVarName, info)
+	//var body []astgen.ASTStmt
+	//aliasTypeName := objectDefinition.TypeName.Name + "Alias"
+	//body = append(body, statement.NewDecl(
+	//	&decl.Alias{
+	//		Name: aliasTypeName,
+	//		Type: expression.Type(objectDefinition.TypeName.Name),
+	//	},
+	//))
+	//
+	//rawVarName := fmt.Sprint("raw", objectDefinition.TypeName.Name)
+	//body = append(body, statement.NewDecl(
+	//	decl.NewVar(rawVarName, expression.Type(aliasTypeName)),
+	//))
+	//
+	//info.AddImports(types.SafeJSONUnmarshal.ImportPaths()...)
+	//body = append(body, ifErrNotNilReturnErrStatement("err",
+	//	statement.NewAssignment(
+	//		expression.VariableVal("err"),
+	//		token.DEFINE,
+	//		&expression.CallExpression{
+	//			Function: expression.Type(types.SafeJSONUnmarshal.GoType(info)),
+	//			Args: []astgen.ASTExpr{
+	//				expression.VariableVal(dataVarName),
+	//				expression.NewUnary(token.AND, expression.VariableVal(rawVarName)),
+	//			},
+	//		},
+	//	),
+	//))
+	//
+	//marshalInit, err := structMarshalInitDecls(objectDefinition, rawVarName, info)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//body = append(body, marshalInit...)
+	//
+	//body = append(body, statement.NewAssignment(
+	//	expression.NewStar(expression.VariableVal(objReceiverName)),
+	//	token.ASSIGN,
+	//	expression.NewCallExpression(expression.VariableVal(objectDefinition.TypeName.Name), expression.VariableVal(rawVarName)),
+	//))
+	//
+	//body = append(body, statement.NewReturn(expression.Nil))
+	body, err := visitors.VisitStructFieldsUnmarshalJSONMethodBody(objReceiverName, objectDefinition.Fields, info)
 	if err != nil {
 		return nil, err
 	}
-	body = append(body, marshalInit...)
-
-	body = append(body, statement.NewAssignment(
-		expression.NewStar(expression.VariableVal(objReceiverName)),
-		token.ASSIGN,
-		expression.NewCallExpression(expression.VariableVal(objectDefinition.TypeName.Name), expression.VariableVal(rawVarName)),
-	))
-
-	body = append(body, statement.NewReturn(expression.Nil))
-
 	return newUnmarshalJSONMethod(objReceiverName, objectDefinition.TypeName.Name, body...), nil
 }
 

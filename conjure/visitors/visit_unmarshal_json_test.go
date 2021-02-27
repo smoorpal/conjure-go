@@ -16,6 +16,10 @@ func TestStructFieldJSONMethods(t *testing.T) {
 
 	stmts, err := VisitStructFieldsUnmarshalJSONMethodBody("x", []spec.FieldDefinition{
 		{
+			FieldName: "fieldAny",
+			Type:      spec.NewTypeFromPrimitive(spec.New_PrimitiveType(spec.PrimitiveType_ANY)),
+		},
+		{
 			FieldName: "fieldString",
 			Type:      spec.NewTypeFromPrimitive(spec.New_PrimitiveType(spec.PrimitiveType_STRING)),
 		},
@@ -47,10 +51,10 @@ func TestStructFieldJSONMethods(t *testing.T) {
 			FieldName: "fieldListString",
 			Type:      spec.NewTypeFromList(spec.ListType{ItemType: spec.NewTypeFromPrimitive(spec.New_PrimitiveType(spec.PrimitiveType_STRING))}),
 		},
-		//{
-		//	FieldName: "fieldListInteger",
-		//	Type:      spec.NewTypeFromList(spec.ListType{ItemType: spec.NewTypeFromPrimitive(spec.New_PrimitiveType(spec.PrimitiveType_INTEGER))}),
-		//},
+		{
+			FieldName: "fieldListInteger",
+			Type:      spec.NewTypeFromList(spec.ListType{ItemType: spec.NewTypeFromPrimitive(spec.New_PrimitiveType(spec.PrimitiveType_INTEGER))}),
+		},
 		{
 			FieldName: "fieldListDatetime",
 			Type:      spec.NewTypeFromList(spec.ListType{ItemType: spec.NewTypeFromPrimitive(spec.New_PrimitiveType(spec.PrimitiveType_DATETIME))}),
@@ -70,11 +74,17 @@ func TestStructFieldJSONMethods(t *testing.T) {
 			}),
 		},
 	}, types.NewPkgInfo("main", types.NewCustomConjureTypes()))
-
-	out, err := goastwriter.Write("main", &decl.Var{
-		Name:  "Stmt",
-		Type:  "",
-		Value: expression.NewFuncLit(expression.FuncType{}, stmts...),
+	out, err := goastwriter.Write("main", &decl.Method{
+		Function: decl.Function{
+			Name: "UnmarshalJSON",
+			FuncType: expression.FuncType{
+				Params:      expression.FuncParams{expression.NewFuncParam("data", expression.ByteSliceType)},
+				ReturnTypes: []expression.Type{expression.ErrorType},
+			},
+			Body: stmts,
+		},
+		ReceiverName: "x",
+		ReceiverType: "*Foo",
 	})
 	assert.NoError(t, err)
 	t.Log(string(out))

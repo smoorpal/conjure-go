@@ -4,6 +4,7 @@ import (
 	"unsafe"
 
 	"github.com/palantir/conjure-go-runtime/v2/conjure-go-contract/errors"
+	"github.com/palantir/pkg/binary"
 	"github.com/palantir/pkg/datetime"
 	"github.com/palantir/pkg/safelong"
 	"github.com/palantir/pkg/uuid"
@@ -11,6 +12,7 @@ import (
 )
 
 type Foo struct {
+	FieldAny                 interface{}
 	FieldString              string
 	FieldInt                 int
 	FieldDatetime            datetime.DateTime
@@ -37,35 +39,82 @@ func (x *Foo) UnmarshalJSON(data []byte) error {
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		switch key.Str {
+		case "fieldAny":
+			if value.Type != gjson.JSON && value.Type != gjson.String && value.Type != gjson.Number && value.Type != gjson.True && value.Type != gjson.False {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			x.FieldAny = value.Value()
 		case "fieldString":
-			if value.Type == gjson.String {
-				x.FieldString = value.Str
-			} else {
+			if value.Type != gjson.String {
 				err = errors.NewInvalidArgument()
+				return false
 			}
+			x.FieldString = value.Str
+		case "fieldInt":
+			if value.Type != gjson.Number {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			x.FieldInt = int(value.Int())
 		case "fieldDatetime":
-			if value.Type == gjson.String {
-			} else {
+			if value.Type != gjson.String {
 				err = errors.NewInvalidArgument()
+				return false
 			}
+			err = x.FieldDatetime.UnmarshalText([]byte(value.Str))
+		case "fieldSafelong":
+			if value.Type != gjson.Number {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			err = x.FieldSafelong.UnmarshalJSON([]byte(value.Raw))
+		case "fieldUUID":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			err = x.FieldUUID.UnmarshalText([]byte(value.Str))
+		case "fieldBinary":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			x.FieldBinary, err = binary.Binary(value.Str).Bytes()
 		case "fieldOptionalString":
-			if value.Type != gjson.Null {
-				if value.Type == gjson.String {
-					v := value.Str
-					x.FieldOptionalString = &v
-				} else {
+			if value.Type == gjson.Null {
+				if value.Type != gjson.String {
 					err = errors.NewInvalidArgument()
+					return false
 				}
+				v = value.Str
+				x.FieldOptionalString = &v
 			}
 		case "fieldListString":
 			if value.IsArray() {
 				value.ForEach(func(_, value gjson.Result) bool {
-					if value.Type == gjson.String {
-						v := value.Str
-						x.FieldListString = append(x.FieldListString, v)
-					} else {
+					var v string
+					if value.Type != gjson.String {
 						err = errors.NewInvalidArgument()
+						return false
 					}
+					v = value.Str
+					x.FieldListString = append(x.FieldListString, v)
+					return err == nil
+				})
+			} else {
+				err = errors.NewInvalidArgument()
+			}
+		case "fieldListInteger":
+			if value.IsArray() {
+				value.ForEach(func(_, value gjson.Result) bool {
+					var v int
+					if value.Type != gjson.Number {
+						err = errors.NewInvalidArgument()
+						return false
+					}
+					v = int(value.Int())
+					x.FieldListInteger = append(x.FieldListInteger, v)
 					return err == nil
 				})
 			} else {
@@ -74,13 +123,13 @@ func (x *Foo) UnmarshalJSON(data []byte) error {
 		case "fieldListDatetime":
 			if value.IsArray() {
 				value.ForEach(func(_, value gjson.Result) bool {
-					if value.Type == gjson.String {
-						v, parseErr := datetime.ParseDateTime(value.Str)
-						err = parseErr
-						x.FieldListDatetime = append(x.FieldListDatetime, v)
-					} else {
+					var v datetime.DateTime
+					if value.Type != gjson.String {
 						err = errors.NewInvalidArgument()
+						return false
 					}
+					err = v.UnmarshalText([]byte(value.Str))
+					x.FieldListDatetime = append(x.FieldListDatetime, v)
 					return err == nil
 				})
 			} else {
@@ -93,17 +142,17 @@ func (x *Foo) UnmarshalJSON(data []byte) error {
 				}
 				value.ForEach(func(key, value gjson.Result) bool {
 					var destKey string
-					if value.Type == gjson.String {
-						destKey = value.Str
-					} else {
+					if value.Type != gjson.String {
 						err = errors.NewInvalidArgument()
+						return false
 					}
+					destKey = value.Str
 					var destVal string
-					if value.Type == gjson.String {
-						destVal = value.Str
-					} else {
+					if value.Type != gjson.String {
 						err = errors.NewInvalidArgument()
+						return false
 					}
+					destVal = value.Str
 					x.FieldMapStringString[destKey] = destVal
 					return err == nil
 				})
@@ -117,17 +166,17 @@ func (x *Foo) UnmarshalJSON(data []byte) error {
 				}
 				value.ForEach(func(key, value gjson.Result) bool {
 					var destKey datetime.DateTime
-					if value.Type == gjson.String {
-						destKey, err = datetime.ParseDateTime(value.Str)
-					} else {
+					if value.Type != gjson.String {
 						err = errors.NewInvalidArgument()
+						return false
 					}
+					err = destKey.UnmarshalText([]byte(value.Str))
 					var destVal safelong.SafeLong
-					if value.Type == gjson.Number {
-						destVal, err = safelong.NewSafeLong(value.Int())
-					} else {
+					if value.Type != gjson.Number {
 						err = errors.NewInvalidArgument()
+						return false
 					}
+					err = destVal.UnmarshalJSON([]byte(value.Raw))
 					x.FieldMapDatetimeSafelong[destKey] = destVal
 					return err == nil
 				})
@@ -135,7 +184,6 @@ func (x *Foo) UnmarshalJSON(data []byte) error {
 				err = errors.NewInvalidArgument()
 			}
 		}
-
 		return err == nil
 	})
 	return err
