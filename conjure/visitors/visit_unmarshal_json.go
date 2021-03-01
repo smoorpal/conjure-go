@@ -52,17 +52,17 @@ func VisitStructFieldsUnmarshalJSONMethodBody(receiverName string, fields []spec
 	// var err error
 	body = append(body, statement.NewDecl(decl.NewVar("err", expression.ErrorType)))
 
-	fieldCases := make([]statement.CaseClause, len(fields))
-	for i, field := range fields {
+	var fieldCases []statement.CaseClause
+	for _, field := range fields {
 		selector := expression.NewSelector(expression.VariableVal(receiverName), transforms.ExportedFieldName(string(field.FieldName)))
 		assignment, err := caseBodyAssignStructFieldToGJSONValue(selector, field.Type, info)
 		if err != nil {
 			return nil, err
 		}
-		fieldCases[i] = statement.CaseClause{
+		fieldCases = append(fieldCases, statement.CaseClause{
 			Exprs: []astgen.ASTExpr{expression.StringVal(field.FieldName)},
 			Body:  assignment,
-		}
+		})
 	}
 
 	// value.ForEach(func(key, value gjson.Result) bool { switch key.Str { ... } return err == nil }
@@ -210,7 +210,7 @@ func (v *gjsonUnmarshalValueVisitor) VisitOptional(t spec.OptionalType) error {
 	innerStmts = append(innerStmts, innerVisitor.stmts...)
 	v.stmts = append(v.stmts, &statement.If{
 		Cond: gjsonNotTypeCondition("Null"),
-		Body: innerVisitor.stmts,
+		Body: innerStmts,
 	})
 	return nil
 }
@@ -350,11 +350,15 @@ func (v *gjsonUnmarshalValueVisitor) VisitExternal(t spec.ExternalReference) err
 }
 
 func (v *gjsonUnmarshalValueVisitor) VisitReference(t spec.TypeName) error {
-	typ, ok := v.info.CustomTypes().Get(t.Name)
+	typ, ok := v.info.CustomTypes().Get(TypeNameToTyperName(t))
 	if !ok {
 		return errors.Errorf("reference type not found %s", t.Name)
 	}
-	defVisitor := gjsonUnmarshalValueReferenceDefVisitor{}
+	defVisitor := gjsonUnmarshalValueReferenceDefVisitor{
+		info:       v.info,
+		selector:   v.selector,
+		typer: typ,
+	}
 	if err := typ.Def.Accept(&defVisitor); err != nil {
 		return err
 	}
@@ -367,6 +371,7 @@ type gjsonUnmarshalValueReferenceDefVisitor struct {
 	// in
 	info     types.PkgInfo
 	selector astgen.ASTExpr
+	typer types.Typer
 
 	// out
 	stmts      []astgen.ASTStmt
@@ -378,7 +383,11 @@ func (v *gjsonUnmarshalValueReferenceDefVisitor) VisitAlias(def spec.AliasDefini
 	if err != nil {
 		return err
 	}
-	if aliasTypeProvider.IsSpecificType(IsText) {
+	if aliasTypeProvider.IsSpecificType(IsString) {
+		v.stmts = append(v.stmts, gjsonTypeCheck(gjsonTypeCondition("String")))
+		v.stmts = append(v.stmts, statement.NewAssignment(v.selector, token.ASSIGN,
+			expression.NewCallExpression(expression.Type(v.typer.GoType(v.info)), expression.NewSelector(expression.VariableVal("value"), "Str"))))
+	} else if aliasTypeProvider.IsSpecificType(IsText) {
 		v.stmts = append(v.stmts, gjsonTypeCheck(gjsonTypeCondition("String")))
 		v.stmts = append(v.stmts, unmarshalTextValue(v.selector))
 	} else {
