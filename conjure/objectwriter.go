@@ -15,9 +15,7 @@
 package conjure
 
 import (
-	"fmt"
 	"go/token"
-	"strings"
 
 	"github.com/palantir/goastwriter/astgen"
 	"github.com/palantir/goastwriter/decl"
@@ -36,7 +34,6 @@ func astForObject(objectDefinition spec.ObjectDefinition, info types.PkgInfo) ([
 		return nil, err
 	}
 
-	containsCollection := false
 	var structFields []*expression.StructField
 
 	for _, fieldDefinition := range objectDefinition.Fields {
@@ -54,53 +51,34 @@ func astForObject(objectDefinition spec.ObjectDefinition, info types.PkgInfo) ([
 		}
 		info.AddImports(typer.ImportPaths()...)
 
-		collectionExpression, err := conjureTypeProvider.CollectionInitializationIfNeeded(info)
-		if err != nil {
-			return nil, err
-		}
-		if collectionExpression != nil {
-			// if there is a map or slice field, the struct contains a collection
-			containsCollection = true
-		}
-		fieldName := string(fieldDefinition.FieldName)
-		tags := []string{
-			fmt.Sprintf("json:%q", fieldName),
-		}
-
-		comment := transforms.Documentation(fieldDefinition.Docs)
-		if comment != "" {
-			// backtick characters ("`") are really painful to deal with in struct tags
-			// (which are themselves defined within backtick literals), so replace with
-			// double quotes instead.
-			tags = append(tags, fmt.Sprintf("conjure-docs:%q", strings.Replace(comment, "`", `"`, -1)))
-		}
 		structFields = append(structFields, &expression.StructField{
-			Name:    transforms.ExportedFieldName(fieldName),
+			Name:    transforms.ExportedFieldName(string(fieldDefinition.FieldName)),
 			Type:    expression.Type(typer.GoType(info)),
-			Tag:     strings.Join(tags, " "),
-			Comment: comment,
+			Comment: transforms.Documentation(fieldDefinition.Docs),
 		})
 	}
 
-	comment := transforms.Documentation(objectDefinition.Docs)
 	decls := []astgen.ASTDecl{
-		decl.NewStruct(objectDefinition.TypeName.Name, structFields, comment),
-	}
-	if containsCollection {
-		for _, f := range []serdeFunc{
-			astForStructJSONMarshal,
-			astForStructJSONUnmarshal,
-		} {
-			serdeDecl, err := f(objectDefinition, info)
-			if err != nil {
-				return nil, err
-			}
-			decls = append(decls, serdeDecl)
-		}
+		decl.NewStruct(objectDefinition.TypeName.Name, structFields, transforms.Documentation(objectDefinition.Docs)),
 	}
 
-	decls = append(decls, newMarshalYAMLMethod(objReceiverName, objectDefinition.TypeName.Name, info))
-	decls = append(decls, newUnmarshalYAMLMethod(objReceiverName, objectDefinition.TypeName.Name, info))
+	if len(objectDefinition.Fields) > 0 {
+		jsonMarshalDecl, err :=  astForStructJSONMarshal(objectDefinition, info)
+		if err != nil {
+			return nil, err
+		}
+		decls = append(decls, jsonMarshalDecl)
+
+		jsonUnmarshalDecl, err :=  astForStructJSONUnmarshal(objectDefinition, info)
+		if err != nil {
+			return nil, err
+		}
+		decls = append(decls, jsonUnmarshalDecl)
+
+		decls = append(decls, newMarshalYAMLMethod(objReceiverName, objectDefinition.TypeName.Name, info))
+		decls = append(decls, newUnmarshalYAMLMethod(objReceiverName, objectDefinition.TypeName.Name, info))
+	}
+
 
 	return decls, nil
 }

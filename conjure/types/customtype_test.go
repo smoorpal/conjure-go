@@ -26,7 +26,7 @@ import (
 func TestCustomConjureTypes(t *testing.T) {
 	customTypes := types.NewCustomConjureTypes()
 
-	err := customTypes.Add("foo", "", types.Integer)
+	err := customTypes.Add("foo", "", types.Integer, nil)
 	require.NoError(t, err)
 
 	val, ok := customTypes.Get("foo")
@@ -37,7 +37,7 @@ func TestCustomConjureTypes(t *testing.T) {
 		Typer: types.Integer,
 	}, val)
 
-	err = customTypes.Add("bar", "", types.String)
+	err = customTypes.Add("bar", "", types.String, nil)
 	require.NoError(t, err)
 
 	val, ok = customTypes.Get("bar")
@@ -48,7 +48,7 @@ func TestCustomConjureTypes(t *testing.T) {
 		Typer: types.String,
 	}, val)
 
-	err = customTypes.Add("foo", "", types.Double)
+	err = customTypes.Add("foo", "", types.Double, nil)
 	require.EqualError(t, err, `"foo" has already been defined as a custom Conjure type`)
 
 	val, ok = customTypes.Get("foo")
@@ -63,7 +63,7 @@ func TestCustomConjureTypes(t *testing.T) {
 func TestAddCaseInsensitive(t *testing.T) {
 	customTypes := types.NewCustomConjureTypes()
 
-	err := customTypes.Add("FooBar", "", types.Integer)
+	err := customTypes.Add("FooBar", "", types.Integer, nil)
 	require.NoError(t, err)
 
 	val, ok := customTypes.Get("fooBAR")
@@ -74,6 +74,6 @@ func TestAddCaseInsensitive(t *testing.T) {
 		Typer: types.Integer,
 	}, val)
 
-	err = customTypes.Add("FOOBAR", "", types.Integer)
+	err = customTypes.Add("FOOBAR", "", types.Integer, nil)
 	assert.EqualError(t, err, "\"FooBar\" has already been defined as a custom Conjure type")
 }

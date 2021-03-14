@@ -3,8 +3,9 @@ package conjure_test
 import (
 	"testing"
 
-	"github.com/palantir/conjure-go/v6/cmd"
 	"github.com/stretchr/testify/require"
+
+	"github.com/palantir/conjure-go/v6/cmd"
 )
 
 func TestGenerate(t *testing.T) {

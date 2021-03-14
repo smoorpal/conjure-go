@@ -109,8 +109,6 @@ func astForAlias(aliasDefinition spec.AliasDefinition, info types.PkgInfo) ([]as
 		decls = append(decls, astForAliasString(aliasDefinition, aliasGoType))
 		decls = append(decls, astForAliasTextMarshal(aliasDefinition, aliasGoType))
 		decls = append(decls, astForAliasTextUnmarshal(aliasDefinition, aliasGoType))
-		decls = append(decls, newMarshalYAMLMethod(aliasReceiverName, aliasDefinition.TypeName.Name, info))
-		decls = append(decls, newUnmarshalYAMLMethod(aliasReceiverName, aliasDefinition.TypeName.Name, info))
 	default:
 		// By default, we delegate json/yaml encoding to the aliased type.
 		decls = append(decls, astForAliasJSONMarshal(aliasDefinition, aliasGoType, info))

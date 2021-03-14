@@ -103,7 +103,7 @@ func newUnmarshalJSONMethod(receiverName, receiverType string, body ...astgen.AS
 
 /*
 func (o Foo) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (o Foo) MarshalYAML() (interface{}, error) {
 }
 */
 func newMarshalYAMLMethod(receiverName, receiverType string, info types.PkgInfo) *decl.Method {
-	info.AddImports("github.com/palantir/pkg/safejson", "github.com/palantir/pkg/safeyaml")
+	info.AddImports("github.com/palantir/pkg/safeyaml")
 	return &decl.Method{
 		ReceiverName: receiverName,
 		ReceiverType: expression.Type(receiverType),
@@ -124,7 +124,7 @@ func newMarshalYAMLMethod(receiverName, receiverType string, info types.PkgInfo)
 				&statement.Assignment{
 					LHS: []astgen.ASTExpr{expression.VariableVal("jsonBytes"), expression.VariableVal("err")},
 					Tok: token.DEFINE,
-					RHS: expression.NewCallFunction("safejson", "Marshal", expression.VariableVal(receiverName)),
+					RHS: expression.NewCallFunction(receiverName, "MarshalJSON"),
 				},
 				ifErrNotNilReturnHelper(true, "nil", "err", nil),
 				statement.NewReturn(expression.NewCallFunction("safeyaml", "JSONtoYAMLMapSlice", expression.VariableVal("jsonBytes"))),
@@ -139,11 +139,11 @@ func (o *Foo) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 */
 func newUnmarshalYAMLMethod(receiverName, receiverType string, info types.PkgInfo) *decl.Method {
-	info.AddImports("github.com/palantir/pkg/safejson", "github.com/palantir/pkg/safeyaml")
+	info.AddImports( "github.com/palantir/pkg/safeyaml")
 	return &decl.Method{
 		ReceiverName: receiverName,
 		ReceiverType: expression.Type(receiverType).Pointer(),
@@ -165,9 +165,8 @@ func newUnmarshalYAMLMethod(receiverName, receiverType string, info types.PkgInf
 				},
 				ifErrNotNilReturnErrStatement("err", nil),
 				statement.NewReturn(
-					expression.NewCallFunction("safejson", "Unmarshal",
-						expression.VariableVal("jsonBytes"),
-						expression.NewStar(expression.NewUnary(token.AND, expression.VariableVal(receiverName))))),
+					expression.NewCallFunction(receiverName, "UnmarshalJSON", expression.VariableVal("jsonBytes")),
+				),
 			},
 		},
 	}
