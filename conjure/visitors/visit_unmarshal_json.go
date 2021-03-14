@@ -51,24 +51,27 @@ func VisitStructFieldsUnmarshalJSONMethodBody(receiverName string, fields []spec
 			statement.NewReturn(expression.NewCallFunction("errors", "NewInvalidArgument")), //TODO: include more helpful info (type name, invalid json) in error
 		},
 	})
-
-	// TODO: initialize all collections
-
-	// var err error
-	body = append(body, statement.NewDecl(decl.NewVar("err", expression.ErrorType)))
-
+	var fieldInits []astgen.ASTStmt
 	var fieldCases []statement.CaseClause
+	var fieldValidates []astgen.ASTStmt
 	for _, field := range fields {
 		selector := expression.NewSelector(expression.VariableVal(receiverName), transforms.ExportedFieldName(string(field.FieldName)))
-		assignment, err := caseBodyAssignStructFieldToGJSONValue(selector, field.Type, info)
+		stmts, err := visitStructFieldsUnmarshalJSONMethodStmts(selector, field, info)
 		if err != nil {
 			return nil, err
 		}
+		fieldInits = append(fieldInits, stmts.Init...)
 		fieldCases = append(fieldCases, statement.CaseClause{
 			Exprs: []astgen.ASTExpr{expression.StringVal(field.FieldName)},
-			Body:  assignment,
+			Body:  stmts.UnmarshalGJSON,
 		})
+		fieldValidates = append(fieldValidates, stmts.ValidateReqdField...)
 	}
+
+	body = append(body, fieldInits...)
+
+	// var err error
+	body = append(body, statement.NewDecl(decl.NewVar("err", expression.ErrorType)))
 
 	// value.ForEach(func(key, value gjson.Result) bool { switch key.Str { ... } return err == nil }
 	body = append(body, statement.NewExpression(expression.NewCallFunction("value", "ForEach",
@@ -80,52 +83,127 @@ func VisitStructFieldsUnmarshalJSONMethodBody(receiverName string, fields []spec
 				}},
 				ReturnTypes: []expression.Type{expression.BoolType},
 			},
+			&statement.If{
+				Cond: expression.NewBinary(
+					expression.NewSelector(expression.VariableVal("value"), "Type"),
+					token.EQL,
+					expression.NewSelector(expression.VariableVal("gjson"), "Null"),
+				),
+				Body: []astgen.ASTStmt{
+					statement.NewReturn(expression.VariableVal("true")),
+				},
+			},
 			&statement.Switch{
 				Expression: expression.NewSelector(expression.VariableVal("key"), "Str"),
 				Cases:      fieldCases,
 			},
 			statement.NewReturn(expression.NewBinary(expression.VariableVal("err"), token.EQL, expression.Nil)),
-		))))
+		),
+	)))
 
-	// return err
-	body = append(body, statement.NewReturn(expression.VariableVal("err")))
+	if len(fieldValidates) > 0 {
+		// if err != nil { return err }
+		body = append(body, &statement.If{
+			Cond: expression.NewBinary(expression.VariableVal("err"), token.NEQ, expression.Nil),
+			Body: []astgen.ASTStmt{statement.NewReturn(expression.VariableVal("err"))},
+		})
+		missingFieldsVar := expression.VariableVal("missingFields")
+		body = append(body, statement.NewDecl(decl.NewVar("missingFields", "[]string")))
+		body = append(body, fieldValidates...)
+		body = append(body, &statement.If{
+			Cond: expression.NewBinary(
+				expression.NewCallExpression(expression.LenBuiltIn, missingFieldsVar),
+				token.GTR,
+				expression.IntVal(0),
+			),
+			Body: []astgen.ASTStmt{statement.NewReturn(
+				expression.NewCallFunction("errors", "NewInvalidArgument",
+					expression.NewCallFunction("errors", "SafeParam", expression.StringVal("missingFields"), missingFieldsVar),
+				),
+			)},
+		})
+	} else {
+		// return err
+		body = append(body, statement.NewReturn(expression.VariableVal("err")))
+	}
+
+	// TODO: Strict mode rejects unknown keys
+	// TODO: Additional Methods: unmarshalGJSON, UnmarshalJSONString
 
 	return body, nil
 }
 
-func caseBodyAssignStructFieldToGJSONValue(selector astgen.ASTExpr, fieldType spec.Type, info types.PkgInfo) ([]astgen.ASTStmt, error) {
-	typeProvider, err := NewConjureTypeProvider(fieldType)
+type structFieldsUnmarshalJSONMethodStmts struct {
+	Init []astgen.ASTStmt
+	UnmarshalGJSON []astgen.ASTStmt
+	ValidateReqdField []astgen.ASTStmt
+}
+
+func visitStructFieldsUnmarshalJSONMethodStmts(selector astgen.ASTExpr, field spec.FieldDefinition, info types.PkgInfo) (structFieldsUnmarshalJSONMethodStmts, error) {
+	result := structFieldsUnmarshalJSONMethodStmts{}
+
+	typeProvider, err := NewConjureTypeProvider(field.Type)
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 	typer, err := typeProvider.ParseType(info)
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 	info.AddImports(typer.ImportPaths()...)
+
+
+	collectionExpression, err := typeProvider.CollectionInitializationIfNeeded(info)
+	if err != nil {
+		return result, err
+	}
+	// If a field is not a collection or optional, it is required.
+	requiredField := collectionExpression == nil && !typeProvider.IsSpecificType(IsOptional) // TODO(bmoylan) This does not handle aliases of optionals
+	seenVar := "seen"+transforms.ExportedFieldName(string(field.FieldName))
+
+	if requiredField {
+		// Declare a 'var seenFieldName bool' which we will set to true inside the case statement.
+		result.Init = append(result.Init, statement.NewDecl(decl.NewVar(seenVar, expression.BoolType)))
+	}
+	if collectionExpression != nil {
+		result.Init = append(result.Init, statement.NewAssignment(selector, token.ASSIGN, collectionExpression))
+	}
 
 	visitor := &gjsonUnmarshalValueVisitor{
 		info:     info,
 		selector: selector,
 		valueVar: "value",
 	}
-	if err := fieldType.Accept(visitor); err != nil {
-		return nil, err
+	if err := field.Type.Accept(visitor); err != nil {
+		return result, err
+	}
+	if visitor.typeCheck != nil {
+		result.UnmarshalGJSON = append(result.UnmarshalGJSON, visitor.typeCheck)
+	}
+	result.UnmarshalGJSON = append(result.UnmarshalGJSON, visitor.stmts...)
+
+	if requiredField {
+		result.UnmarshalGJSON = append(
+			[]astgen.ASTStmt{statement.NewAssignment(expression.VariableVal(seenVar), token.ASSIGN, expression.VariableVal("true"))},
+			result.UnmarshalGJSON...)
+
+		result.ValidateReqdField = append(result.ValidateReqdField, &statement.If{
+			Cond: expression.NewUnary(token.NOT, expression.VariableVal(seenVar)),
+			Body: []astgen.ASTStmt{
+				statement.NewAssignment(expression.VariableVal("missingFields"), token.ASSIGN,
+					expression.NewCallExpression(expression.AppendBuiltIn, expression.VariableVal("missingFields"), expression.StringVal(field.FieldName))),
+			},
+		})
 	}
 
-	var stmts []astgen.ASTStmt
-	if visitor.typeCheck != nil {
-		stmts = append(stmts, visitor.typeCheck)
-	}
-	stmts = append(stmts, visitor.stmts...)
-	return stmts, nil
+	return result, nil
 }
 
 type gjsonUnmarshalValueVisitor struct {
 	// in
-	info       types.PkgInfo
-	selector   astgen.ASTExpr
-	valueVar   string
+	info     types.PkgInfo
+	selector astgen.ASTExpr
+	valueVar string
 
 	// out
 	typeCheck  astgen.ASTStmt
@@ -306,12 +384,6 @@ func (v *gjsonUnmarshalValueVisitor) VisitMap(t spec.MapType) error {
 	if err := t.KeyType.Accept(keyVisitor); err != nil {
 		return err
 	}
-	if keyVisitor.typeCheck != nil {
-		innerStmts = append(innerStmts, keyVisitor.typeCheck)
-	}
-	innerStmts = append(innerStmts, keyDecl)
-	innerStmts = append(innerStmts, keyVisitor.stmts...)
-
 	valDecl, err := declVar("destVal", t.ValueType, v.info)
 	if err != nil {
 		return err
@@ -324,9 +396,15 @@ func (v *gjsonUnmarshalValueVisitor) VisitMap(t spec.MapType) error {
 	if err := t.ValueType.Accept(valVisitor); err != nil {
 		return err
 	}
+
+	if keyVisitor.typeCheck != nil {
+		innerStmts = append(innerStmts, keyVisitor.typeCheck)
+	}
 	if valVisitor.typeCheck != nil {
 		innerStmts = append(innerStmts, valVisitor.typeCheck)
 	}
+	innerStmts = append(innerStmts, keyDecl)
+	innerStmts = append(innerStmts, keyVisitor.stmts...)
 	innerStmts = append(innerStmts, valDecl)
 	innerStmts = append(innerStmts, valVisitor.stmts...)
 
@@ -497,14 +575,6 @@ func gjsonTypeCondition(valueVar string, typeNames ...string) astgen.ASTExpr {
 		}
 	}
 	return cond
-}
-
-func ifNotGJSONValueTypeReturnInvalidArgument(cond astgen.ASTExpr, body []astgen.ASTStmt) *statement.If {
-	return &statement.If{
-		Cond: cond,
-		Body: body,
-		Else: errEqualNewInvalidArgument(),
-	}
 }
 
 func errEqualNewInvalidArgument() *statement.Assignment {

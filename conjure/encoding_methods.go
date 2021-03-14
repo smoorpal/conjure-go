@@ -143,7 +143,7 @@ func (o *Foo) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 */
 func newUnmarshalYAMLMethod(receiverName, receiverType string, info types.PkgInfo) *decl.Method {
-	info.AddImports( "github.com/palantir/pkg/safeyaml")
+	info.AddImports("github.com/palantir/pkg/safeyaml")
 	return &decl.Method{
 		ReceiverName: receiverName,
 		ReceiverType: expression.Type(receiverType).Pointer(),

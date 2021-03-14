@@ -63,13 +63,13 @@ func astForObject(objectDefinition spec.ObjectDefinition, info types.PkgInfo) ([
 	}
 
 	if len(objectDefinition.Fields) > 0 {
-		jsonMarshalDecl, err :=  astForStructJSONMarshal(objectDefinition, info)
+		jsonMarshalDecl, err := astForStructJSONMarshal(objectDefinition, info)
 		if err != nil {
 			return nil, err
 		}
 		decls = append(decls, jsonMarshalDecl)
 
-		jsonUnmarshalDecl, err :=  astForStructJSONUnmarshal(objectDefinition, info)
+		jsonUnmarshalDecl, err := astForStructJSONUnmarshal(objectDefinition, info)
 		if err != nil {
 			return nil, err
 		}
@@ -78,7 +78,6 @@ func astForObject(objectDefinition spec.ObjectDefinition, info types.PkgInfo) ([
 		decls = append(decls, newMarshalYAMLMethod(objReceiverName, objectDefinition.TypeName.Name, info))
 		decls = append(decls, newUnmarshalYAMLMethod(objReceiverName, objectDefinition.TypeName.Name, info))
 	}
-
 
 	return decls, nil
 }
