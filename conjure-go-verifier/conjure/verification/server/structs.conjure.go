@@ -3,15 +3,17 @@
 package server
 
 import (
+	"github.com/palantir/conjure-go-runtime/conjure-go-contract/errors"
 	"github.com/palantir/pkg/safejson"
 	"github.com/palantir/pkg/safeyaml"
+	"github.com/tidwall/gjson"
 )
 
 type ClientTestCases struct {
-	AutoDeserialize         map[EndpointName]PositiveAndNegativeTestCases `json:"autoDeserialize"`
-	SingleHeaderService     map[EndpointName][]string                     `json:"singleHeaderService"`
-	SinglePathParamService  map[EndpointName][]string                     `json:"singlePathParamService"`
-	SingleQueryParamService map[EndpointName][]string                     `json:"singleQueryParamService"`
+	AutoDeserialize         map[EndpointName]PositiveAndNegativeTestCases
+	SingleHeaderService     map[EndpointName][]string
+	SinglePathParamService  map[EndpointName][]string
+	SingleQueryParamService map[EndpointName][]string
 }
 
 func (o ClientTestCases) MarshalJSON() ([]byte, error) {
@@ -32,29 +34,143 @@ func (o ClientTestCases) MarshalJSON() ([]byte, error) {
 }
 
 func (o *ClientTestCases) UnmarshalJSON(data []byte) error {
-	type ClientTestCasesAlias ClientTestCases
-	var rawClientTestCases ClientTestCasesAlias
-	if err := safejson.Unmarshal(data, &rawClientTestCases); err != nil {
-		return err
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
 	}
-	if rawClientTestCases.AutoDeserialize == nil {
-		rawClientTestCases.AutoDeserialize = make(map[EndpointName]PositiveAndNegativeTestCases, 0)
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
 	}
-	if rawClientTestCases.SingleHeaderService == nil {
-		rawClientTestCases.SingleHeaderService = make(map[EndpointName][]string, 0)
-	}
-	if rawClientTestCases.SinglePathParamService == nil {
-		rawClientTestCases.SinglePathParamService = make(map[EndpointName][]string, 0)
-	}
-	if rawClientTestCases.SingleQueryParamService == nil {
-		rawClientTestCases.SingleQueryParamService = make(map[EndpointName][]string, 0)
-	}
-	*o = ClientTestCases(rawClientTestCases)
-	return nil
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "autoDeserialize":
+			if !value.IsObject() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			if o.AutoDeserialize == nil {
+				o.AutoDeserialize = make(map[EndpointName]PositiveAndNegativeTestCases)
+			}
+			value.ForEach(func(key, value gjson.Result) bool {
+				if key.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var destKey EndpointName
+				destKey = EndpointName(key.Str)
+				var destVal PositiveAndNegativeTestCases
+				err = destVal.UnmarshalJSON([]byte(value.Raw))
+				o.AutoDeserialize[destKey] = destVal
+				return err == nil
+			})
+		case "singleHeaderService":
+			if !value.IsObject() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			if o.SingleHeaderService == nil {
+				o.SingleHeaderService = make(map[EndpointName][]string)
+			}
+			value.ForEach(func(key, value gjson.Result) bool {
+				if key.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var destKey EndpointName
+				destKey = EndpointName(key.Str)
+				var destVal []string
+				if !value.IsArray() {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				value.ForEach(func(_, value gjson.Result) bool {
+					if value.Type != gjson.String {
+						err = errors.NewInvalidArgument()
+						return false
+					}
+					var v string
+					v = value.Str
+					destVal = append(destVal, v)
+					return err == nil
+				})
+				o.SingleHeaderService[destKey] = destVal
+				return err == nil
+			})
+		case "singlePathParamService":
+			if !value.IsObject() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			if o.SinglePathParamService == nil {
+				o.SinglePathParamService = make(map[EndpointName][]string)
+			}
+			value.ForEach(func(key, value gjson.Result) bool {
+				if key.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var destKey EndpointName
+				destKey = EndpointName(key.Str)
+				var destVal []string
+				if !value.IsArray() {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				value.ForEach(func(_, value gjson.Result) bool {
+					if value.Type != gjson.String {
+						err = errors.NewInvalidArgument()
+						return false
+					}
+					var v string
+					v = value.Str
+					destVal = append(destVal, v)
+					return err == nil
+				})
+				o.SinglePathParamService[destKey] = destVal
+				return err == nil
+			})
+		case "singleQueryParamService":
+			if !value.IsObject() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			if o.SingleQueryParamService == nil {
+				o.SingleQueryParamService = make(map[EndpointName][]string)
+			}
+			value.ForEach(func(key, value gjson.Result) bool {
+				if key.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var destKey EndpointName
+				destKey = EndpointName(key.Str)
+				var destVal []string
+				if !value.IsArray() {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				value.ForEach(func(_, value gjson.Result) bool {
+					if value.Type != gjson.String {
+						err = errors.NewInvalidArgument()
+						return false
+					}
+					var v string
+					v = value.Str
+					destVal = append(destVal, v)
+					return err == nil
+				})
+				o.SingleQueryParamService[destKey] = destVal
+				return err == nil
+			})
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o ClientTestCases) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -66,14 +182,14 @@ func (o *ClientTestCases) UnmarshalYAML(unmarshal func(interface{}) error) error
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type IgnoredClientTestCases struct {
-	AutoDeserialize         map[EndpointName][]string `json:"autoDeserialize"`
-	SingleHeaderService     map[EndpointName][]string `json:"singleHeaderService"`
-	SinglePathParamService  map[EndpointName][]string `json:"singlePathParamService"`
-	SingleQueryParamService map[EndpointName][]string `json:"singleQueryParamService"`
+	AutoDeserialize         map[EndpointName][]string
+	SingleHeaderService     map[EndpointName][]string
+	SinglePathParamService  map[EndpointName][]string
+	SingleQueryParamService map[EndpointName][]string
 }
 
 func (o IgnoredClientTestCases) MarshalJSON() ([]byte, error) {
@@ -94,29 +210,156 @@ func (o IgnoredClientTestCases) MarshalJSON() ([]byte, error) {
 }
 
 func (o *IgnoredClientTestCases) UnmarshalJSON(data []byte) error {
-	type IgnoredClientTestCasesAlias IgnoredClientTestCases
-	var rawIgnoredClientTestCases IgnoredClientTestCasesAlias
-	if err := safejson.Unmarshal(data, &rawIgnoredClientTestCases); err != nil {
-		return err
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
 	}
-	if rawIgnoredClientTestCases.AutoDeserialize == nil {
-		rawIgnoredClientTestCases.AutoDeserialize = make(map[EndpointName][]string, 0)
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
 	}
-	if rawIgnoredClientTestCases.SingleHeaderService == nil {
-		rawIgnoredClientTestCases.SingleHeaderService = make(map[EndpointName][]string, 0)
-	}
-	if rawIgnoredClientTestCases.SinglePathParamService == nil {
-		rawIgnoredClientTestCases.SinglePathParamService = make(map[EndpointName][]string, 0)
-	}
-	if rawIgnoredClientTestCases.SingleQueryParamService == nil {
-		rawIgnoredClientTestCases.SingleQueryParamService = make(map[EndpointName][]string, 0)
-	}
-	*o = IgnoredClientTestCases(rawIgnoredClientTestCases)
-	return nil
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "autoDeserialize":
+			if !value.IsObject() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			if o.AutoDeserialize == nil {
+				o.AutoDeserialize = make(map[EndpointName][]string)
+			}
+			value.ForEach(func(key, value gjson.Result) bool {
+				if key.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var destKey EndpointName
+				destKey = EndpointName(key.Str)
+				var destVal []string
+				if !value.IsArray() {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				value.ForEach(func(_, value gjson.Result) bool {
+					if value.Type != gjson.String {
+						err = errors.NewInvalidArgument()
+						return false
+					}
+					var v string
+					v = value.Str
+					destVal = append(destVal, v)
+					return err == nil
+				})
+				o.AutoDeserialize[destKey] = destVal
+				return err == nil
+			})
+		case "singleHeaderService":
+			if !value.IsObject() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			if o.SingleHeaderService == nil {
+				o.SingleHeaderService = make(map[EndpointName][]string)
+			}
+			value.ForEach(func(key, value gjson.Result) bool {
+				if key.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var destKey EndpointName
+				destKey = EndpointName(key.Str)
+				var destVal []string
+				if !value.IsArray() {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				value.ForEach(func(_, value gjson.Result) bool {
+					if value.Type != gjson.String {
+						err = errors.NewInvalidArgument()
+						return false
+					}
+					var v string
+					v = value.Str
+					destVal = append(destVal, v)
+					return err == nil
+				})
+				o.SingleHeaderService[destKey] = destVal
+				return err == nil
+			})
+		case "singlePathParamService":
+			if !value.IsObject() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			if o.SinglePathParamService == nil {
+				o.SinglePathParamService = make(map[EndpointName][]string)
+			}
+			value.ForEach(func(key, value gjson.Result) bool {
+				if key.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var destKey EndpointName
+				destKey = EndpointName(key.Str)
+				var destVal []string
+				if !value.IsArray() {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				value.ForEach(func(_, value gjson.Result) bool {
+					if value.Type != gjson.String {
+						err = errors.NewInvalidArgument()
+						return false
+					}
+					var v string
+					v = value.Str
+					destVal = append(destVal, v)
+					return err == nil
+				})
+				o.SinglePathParamService[destKey] = destVal
+				return err == nil
+			})
+		case "singleQueryParamService":
+			if !value.IsObject() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			if o.SingleQueryParamService == nil {
+				o.SingleQueryParamService = make(map[EndpointName][]string)
+			}
+			value.ForEach(func(key, value gjson.Result) bool {
+				if key.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var destKey EndpointName
+				destKey = EndpointName(key.Str)
+				var destVal []string
+				if !value.IsArray() {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				value.ForEach(func(_, value gjson.Result) bool {
+					if value.Type != gjson.String {
+						err = errors.NewInvalidArgument()
+						return false
+					}
+					var v string
+					v = value.Str
+					destVal = append(destVal, v)
+					return err == nil
+				})
+				o.SingleQueryParamService[destKey] = destVal
+				return err == nil
+			})
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o IgnoredClientTestCases) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -128,15 +371,39 @@ func (o *IgnoredClientTestCases) UnmarshalYAML(unmarshal func(interface{}) error
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type IgnoredTestCases struct {
-	Client IgnoredClientTestCases `json:"client"`
+	Client IgnoredClientTestCases
+}
+
+func (o IgnoredTestCases) MarshalJSON() ([]byte, error) {
+	type IgnoredTestCasesAlias IgnoredTestCases
+	return safejson.Marshal(IgnoredTestCasesAlias(o))
+}
+
+func (o *IgnoredTestCases) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "client":
+			err = o.Client.UnmarshalJSON([]byte(value.Raw))
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o IgnoredTestCases) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -148,12 +415,12 @@ func (o *IgnoredTestCases) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type PositiveAndNegativeTestCases struct {
-	Positive []string `json:"positive"`
-	Negative []string `json:"negative"`
+	Positive []string
+	Negative []string
 }
 
 func (o PositiveAndNegativeTestCases) MarshalJSON() ([]byte, error) {
@@ -168,23 +435,54 @@ func (o PositiveAndNegativeTestCases) MarshalJSON() ([]byte, error) {
 }
 
 func (o *PositiveAndNegativeTestCases) UnmarshalJSON(data []byte) error {
-	type PositiveAndNegativeTestCasesAlias PositiveAndNegativeTestCases
-	var rawPositiveAndNegativeTestCases PositiveAndNegativeTestCasesAlias
-	if err := safejson.Unmarshal(data, &rawPositiveAndNegativeTestCases); err != nil {
-		return err
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
 	}
-	if rawPositiveAndNegativeTestCases.Positive == nil {
-		rawPositiveAndNegativeTestCases.Positive = make([]string, 0)
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
 	}
-	if rawPositiveAndNegativeTestCases.Negative == nil {
-		rawPositiveAndNegativeTestCases.Negative = make([]string, 0)
-	}
-	*o = PositiveAndNegativeTestCases(rawPositiveAndNegativeTestCases)
-	return nil
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "positive":
+			if !value.IsArray() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			value.ForEach(func(_, value gjson.Result) bool {
+				if value.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var v string
+				v = value.Str
+				o.Positive = append(o.Positive, v)
+				return err == nil
+			})
+		case "negative":
+			if !value.IsArray() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			value.ForEach(func(_, value gjson.Result) bool {
+				if value.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var v string
+				v = value.Str
+				o.Negative = append(o.Negative, v)
+				return err == nil
+			})
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o PositiveAndNegativeTestCases) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -196,15 +494,39 @@ func (o *PositiveAndNegativeTestCases) UnmarshalYAML(unmarshal func(interface{})
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type TestCases struct {
-	Client ClientTestCases `json:"client"`
+	Client ClientTestCases
+}
+
+func (o TestCases) MarshalJSON() ([]byte, error) {
+	type TestCasesAlias TestCases
+	return safejson.Marshal(TestCasesAlias(o))
+}
+
+func (o *TestCases) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "client":
+			err = o.Client.UnmarshalJSON([]byte(value.Raw))
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o TestCases) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -216,5 +538,5 @@ func (o *TestCases) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }

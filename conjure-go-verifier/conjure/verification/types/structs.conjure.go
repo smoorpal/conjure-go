@@ -3,21 +3,52 @@
 package types
 
 import (
+	"github.com/palantir/conjure-go-runtime/conjure-go-contract/errors"
 	"github.com/palantir/pkg/bearertoken"
+	"github.com/palantir/pkg/binary"
 	"github.com/palantir/pkg/datetime"
 	"github.com/palantir/pkg/rid"
 	"github.com/palantir/pkg/safejson"
 	"github.com/palantir/pkg/safelong"
 	"github.com/palantir/pkg/safeyaml"
 	"github.com/palantir/pkg/uuid"
+	"github.com/tidwall/gjson"
 )
 
 type AnyExample struct {
-	Value interface{} `json:"value"`
+	Value interface{}
+}
+
+func (o AnyExample) MarshalJSON() ([]byte, error) {
+	type AnyExampleAlias AnyExample
+	return safejson.Marshal(AnyExampleAlias(o))
+}
+
+func (o *AnyExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if value.Type != gjson.JSON && value.Type != gjson.String && value.Type != gjson.Number && value.Type != gjson.True && value.Type != gjson.False {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.Value = value.Value()
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o AnyExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -29,15 +60,43 @@ func (o *AnyExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type BearerTokenExample struct {
-	Value bearertoken.Token `json:"value"`
+	Value bearertoken.Token
+}
+
+func (o BearerTokenExample) MarshalJSON() ([]byte, error) {
+	type BearerTokenExampleAlias BearerTokenExample
+	return safejson.Marshal(BearerTokenExampleAlias(o))
+}
+
+func (o *BearerTokenExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			err = o.Value.UnmarshalText([]byte(value.Str))
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o BearerTokenExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -49,11 +108,11 @@ func (o *BearerTokenExample) UnmarshalYAML(unmarshal func(interface{}) error) er
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type BinaryExample struct {
-	Value []byte `json:"value"`
+	Value []byte
 }
 
 func (o BinaryExample) MarshalJSON() ([]byte, error) {
@@ -65,20 +124,30 @@ func (o BinaryExample) MarshalJSON() ([]byte, error) {
 }
 
 func (o *BinaryExample) UnmarshalJSON(data []byte) error {
-	type BinaryExampleAlias BinaryExample
-	var rawBinaryExample BinaryExampleAlias
-	if err := safejson.Unmarshal(data, &rawBinaryExample); err != nil {
-		return err
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
 	}
-	if rawBinaryExample.Value == nil {
-		rawBinaryExample.Value = make([]byte, 0)
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
 	}
-	*o = BinaryExample(rawBinaryExample)
-	return nil
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.Value, err = binary.Binary(value.Str).Bytes()
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o BinaryExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -90,15 +159,43 @@ func (o *BinaryExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type BooleanExample struct {
-	Value bool `json:"value"`
+	Value bool
+}
+
+func (o BooleanExample) MarshalJSON() ([]byte, error) {
+	type BooleanExampleAlias BooleanExample
+	return safejson.Marshal(BooleanExampleAlias(o))
+}
+
+func (o *BooleanExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if value.Type != gjson.False && value.Type != gjson.True {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.Value = value.Bool
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o BooleanExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -110,15 +207,43 @@ func (o *BooleanExample) UnmarshalYAML(unmarshal func(interface{}) error) error 
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type DateTimeExample struct {
-	Value datetime.DateTime `json:"value"`
+	Value datetime.DateTime
+}
+
+func (o DateTimeExample) MarshalJSON() ([]byte, error) {
+	type DateTimeExampleAlias DateTimeExample
+	return safejson.Marshal(DateTimeExampleAlias(o))
+}
+
+func (o *DateTimeExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			err = o.Value.UnmarshalText([]byte(value.Str))
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o DateTimeExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -130,15 +255,43 @@ func (o *DateTimeExample) UnmarshalYAML(unmarshal func(interface{}) error) error
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type DoubleExample struct {
-	Value float64 `json:"value"`
+	Value float64
+}
+
+func (o DoubleExample) MarshalJSON() ([]byte, error) {
+	type DoubleExampleAlias DoubleExample
+	return safejson.Marshal(DoubleExampleAlias(o))
+}
+
+func (o *DoubleExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if value.Type != gjson.Number {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.Value = value.Float
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o DoubleExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -150,34 +303,46 @@ func (o *DoubleExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type EmptyObjectExample struct {
 }
 
-func (o EmptyObjectExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *EmptyObjectExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return safejson.Unmarshal(jsonBytes, *&o)
-}
-
 type EnumFieldExample struct {
-	Enum EnumExample `json:"enum"`
+	Enum EnumExample
+}
+
+func (o EnumFieldExample) MarshalJSON() ([]byte, error) {
+	type EnumFieldExampleAlias EnumFieldExample
+	return safejson.Marshal(EnumFieldExampleAlias(o))
+}
+
+func (o *EnumFieldExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "enum":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			err = o.Enum.UnmarshalText([]byte(value.Str))
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o EnumFieldExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -189,15 +354,43 @@ func (o *EnumFieldExample) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type IntegerExample struct {
-	Value int `json:"value"`
+	Value int
+}
+
+func (o IntegerExample) MarshalJSON() ([]byte, error) {
+	type IntegerExampleAlias IntegerExample
+	return safejson.Marshal(IntegerExampleAlias(o))
+}
+
+func (o *IntegerExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if value.Type != gjson.Number {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.Value = int(value.Int())
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o IntegerExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -209,15 +402,43 @@ func (o *IntegerExample) UnmarshalYAML(unmarshal func(interface{}) error) error 
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type KebabCaseObjectExample struct {
-	KebabCasedField int `json:"kebab-cased-field"`
+	KebabCasedField int
+}
+
+func (o KebabCaseObjectExample) MarshalJSON() ([]byte, error) {
+	type KebabCaseObjectExampleAlias KebabCaseObjectExample
+	return safejson.Marshal(KebabCaseObjectExampleAlias(o))
+}
+
+func (o *KebabCaseObjectExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "kebab-cased-field":
+			if value.Type != gjson.Number {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.KebabCasedField = int(value.Int())
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o KebabCaseObjectExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -229,11 +450,11 @@ func (o *KebabCaseObjectExample) UnmarshalYAML(unmarshal func(interface{}) error
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type ListExample struct {
-	Value []string `json:"value"`
+	Value []string
 }
 
 func (o ListExample) MarshalJSON() ([]byte, error) {
@@ -245,20 +466,39 @@ func (o ListExample) MarshalJSON() ([]byte, error) {
 }
 
 func (o *ListExample) UnmarshalJSON(data []byte) error {
-	type ListExampleAlias ListExample
-	var rawListExample ListExampleAlias
-	if err := safejson.Unmarshal(data, &rawListExample); err != nil {
-		return err
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
 	}
-	if rawListExample.Value == nil {
-		rawListExample.Value = make([]string, 0)
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
 	}
-	*o = ListExample(rawListExample)
-	return nil
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if !value.IsArray() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			value.ForEach(func(_, value gjson.Result) bool {
+				if value.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var v string
+				v = value.Str
+				o.Value = append(o.Value, v)
+				return err == nil
+			})
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o ListExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -270,15 +510,47 @@ func (o *ListExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type LongFieldNameOptionalExample struct {
-	SomeLongName *string `json:"someLongName"`
+	SomeLongName *string
+}
+
+func (o LongFieldNameOptionalExample) MarshalJSON() ([]byte, error) {
+	type LongFieldNameOptionalExampleAlias LongFieldNameOptionalExample
+	return safejson.Marshal(LongFieldNameOptionalExampleAlias(o))
+}
+
+func (o *LongFieldNameOptionalExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "someLongName":
+			if value.Type != gjson.Null {
+				if value.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var v string
+				v = value.Str
+				o.SomeLongName = &v
+			}
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o LongFieldNameOptionalExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -290,11 +562,11 @@ func (o *LongFieldNameOptionalExample) UnmarshalYAML(unmarshal func(interface{})
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type MapExample struct {
-	Value map[string]string `json:"value"`
+	Value map[string]string
 }
 
 func (o MapExample) MarshalJSON() ([]byte, error) {
@@ -306,20 +578,48 @@ func (o MapExample) MarshalJSON() ([]byte, error) {
 }
 
 func (o *MapExample) UnmarshalJSON(data []byte) error {
-	type MapExampleAlias MapExample
-	var rawMapExample MapExampleAlias
-	if err := safejson.Unmarshal(data, &rawMapExample); err != nil {
-		return err
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
 	}
-	if rawMapExample.Value == nil {
-		rawMapExample.Value = make(map[string]string, 0)
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
 	}
-	*o = MapExample(rawMapExample)
-	return nil
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if !value.IsObject() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			if o.Value == nil {
+				o.Value = make(map[string]string)
+			}
+			value.ForEach(func(key, value gjson.Result) bool {
+				if key.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var destKey string
+				destKey = key.Str
+				if value.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var destVal string
+				destVal = value.Str
+				o.Value[destKey] = destVal
+				return err == nil
+			})
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o MapExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -331,18 +631,18 @@ func (o *MapExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type ObjectExample struct {
-	String       string             `json:"string"`
-	Integer      int                `json:"integer"`
-	DoubleValue  float64            `json:"doubleValue"`
-	OptionalItem *string            `json:"optionalItem"`
-	Items        []string           `json:"items"`
-	Set          []string           `json:"set"`
-	Map          map[string]string  `json:"map"`
-	Alias        StringAliasExample `json:"alias"`
+	String       string
+	Integer      int
+	DoubleValue  float64
+	OptionalItem *string
+	Items        []string
+	Set          []string
+	Map          map[string]string
+	Alias        StringAliasExample
 }
 
 func (o ObjectExample) MarshalJSON() ([]byte, error) {
@@ -360,26 +660,112 @@ func (o ObjectExample) MarshalJSON() ([]byte, error) {
 }
 
 func (o *ObjectExample) UnmarshalJSON(data []byte) error {
-	type ObjectExampleAlias ObjectExample
-	var rawObjectExample ObjectExampleAlias
-	if err := safejson.Unmarshal(data, &rawObjectExample); err != nil {
-		return err
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
 	}
-	if rawObjectExample.Items == nil {
-		rawObjectExample.Items = make([]string, 0)
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
 	}
-	if rawObjectExample.Set == nil {
-		rawObjectExample.Set = make([]string, 0)
-	}
-	if rawObjectExample.Map == nil {
-		rawObjectExample.Map = make(map[string]string, 0)
-	}
-	*o = ObjectExample(rawObjectExample)
-	return nil
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "string":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.String = value.Str
+		case "integer":
+			if value.Type != gjson.Number {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.Integer = int(value.Int())
+		case "doubleValue":
+			if value.Type != gjson.Number {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.DoubleValue = value.Float
+		case "optionalItem":
+			if value.Type != gjson.Null {
+				if value.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var v string
+				v = value.Str
+				o.OptionalItem = &v
+			}
+		case "items":
+			if !value.IsArray() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			value.ForEach(func(_, value gjson.Result) bool {
+				if value.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var v string
+				v = value.Str
+				o.Items = append(o.Items, v)
+				return err == nil
+			})
+		case "set":
+			if !value.IsArray() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			value.ForEach(func(_, value gjson.Result) bool {
+				if value.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var v string
+				v = value.Str
+				o.Set = append(o.Set, v)
+				return err == nil
+			})
+		case "map":
+			if !value.IsObject() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			if o.Map == nil {
+				o.Map = make(map[string]string)
+			}
+			value.ForEach(func(key, value gjson.Result) bool {
+				if key.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var destKey string
+				destKey = key.Str
+				if value.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var destVal string
+				destVal = value.Str
+				o.Map[destKey] = destVal
+				return err == nil
+			})
+		case "alias":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.Alias = StringAliasExample(value.Str)
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o ObjectExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -391,15 +777,47 @@ func (o *ObjectExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type OptionalBooleanExample struct {
-	Value *bool `json:"value"`
+	Value *bool
+}
+
+func (o OptionalBooleanExample) MarshalJSON() ([]byte, error) {
+	type OptionalBooleanExampleAlias OptionalBooleanExample
+	return safejson.Marshal(OptionalBooleanExampleAlias(o))
+}
+
+func (o *OptionalBooleanExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if value.Type != gjson.Null {
+				if value.Type != gjson.False && value.Type != gjson.True {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var v bool
+				v = value.Bool
+				o.Value = &v
+			}
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o OptionalBooleanExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -411,15 +829,47 @@ func (o *OptionalBooleanExample) UnmarshalYAML(unmarshal func(interface{}) error
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type OptionalExample struct {
-	Value *string `json:"value"`
+	Value *string
+}
+
+func (o OptionalExample) MarshalJSON() ([]byte, error) {
+	type OptionalExampleAlias OptionalExample
+	return safejson.Marshal(OptionalExampleAlias(o))
+}
+
+func (o *OptionalExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if value.Type != gjson.Null {
+				if value.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var v string
+				v = value.Str
+				o.Value = &v
+			}
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o OptionalExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -431,15 +881,47 @@ func (o *OptionalExample) UnmarshalYAML(unmarshal func(interface{}) error) error
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type OptionalIntegerExample struct {
-	Value *int `json:"value"`
+	Value *int
+}
+
+func (o OptionalIntegerExample) MarshalJSON() ([]byte, error) {
+	type OptionalIntegerExampleAlias OptionalIntegerExample
+	return safejson.Marshal(OptionalIntegerExampleAlias(o))
+}
+
+func (o *OptionalIntegerExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if value.Type != gjson.Null {
+				if value.Type != gjson.Number {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var v int
+				v = int(value.Int())
+				o.Value = &v
+			}
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o OptionalIntegerExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -451,15 +933,43 @@ func (o *OptionalIntegerExample) UnmarshalYAML(unmarshal func(interface{}) error
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type RidExample struct {
-	Value rid.ResourceIdentifier `json:"value"`
+	Value rid.ResourceIdentifier
+}
+
+func (o RidExample) MarshalJSON() ([]byte, error) {
+	type RidExampleAlias RidExample
+	return safejson.Marshal(RidExampleAlias(o))
+}
+
+func (o *RidExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			err = o.Value.UnmarshalText([]byte(value.Str))
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o RidExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -471,15 +981,43 @@ func (o *RidExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type SafeLongExample struct {
-	Value safelong.SafeLong `json:"value"`
+	Value safelong.SafeLong
+}
+
+func (o SafeLongExample) MarshalJSON() ([]byte, error) {
+	type SafeLongExampleAlias SafeLongExample
+	return safejson.Marshal(SafeLongExampleAlias(o))
+}
+
+func (o *SafeLongExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if value.Type != gjson.Number {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			err = o.Value.UnmarshalJSON([]byte(value.Raw))
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o SafeLongExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -491,11 +1029,11 @@ func (o *SafeLongExample) UnmarshalYAML(unmarshal func(interface{}) error) error
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type SetDoubleExample struct {
-	Value []float64 `json:"value"`
+	Value []float64
 }
 
 func (o SetDoubleExample) MarshalJSON() ([]byte, error) {
@@ -507,20 +1045,39 @@ func (o SetDoubleExample) MarshalJSON() ([]byte, error) {
 }
 
 func (o *SetDoubleExample) UnmarshalJSON(data []byte) error {
-	type SetDoubleExampleAlias SetDoubleExample
-	var rawSetDoubleExample SetDoubleExampleAlias
-	if err := safejson.Unmarshal(data, &rawSetDoubleExample); err != nil {
-		return err
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
 	}
-	if rawSetDoubleExample.Value == nil {
-		rawSetDoubleExample.Value = make([]float64, 0)
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
 	}
-	*o = SetDoubleExample(rawSetDoubleExample)
-	return nil
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if !value.IsArray() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			value.ForEach(func(_, value gjson.Result) bool {
+				if value.Type != gjson.Number {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var v float64
+				v = value.Float
+				o.Value = append(o.Value, v)
+				return err == nil
+			})
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o SetDoubleExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -532,11 +1089,11 @@ func (o *SetDoubleExample) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type SetStringExample struct {
-	Value []string `json:"value"`
+	Value []string
 }
 
 func (o SetStringExample) MarshalJSON() ([]byte, error) {
@@ -548,20 +1105,39 @@ func (o SetStringExample) MarshalJSON() ([]byte, error) {
 }
 
 func (o *SetStringExample) UnmarshalJSON(data []byte) error {
-	type SetStringExampleAlias SetStringExample
-	var rawSetStringExample SetStringExampleAlias
-	if err := safejson.Unmarshal(data, &rawSetStringExample); err != nil {
-		return err
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
 	}
-	if rawSetStringExample.Value == nil {
-		rawSetStringExample.Value = make([]string, 0)
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
 	}
-	*o = SetStringExample(rawSetStringExample)
-	return nil
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if !value.IsArray() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			value.ForEach(func(_, value gjson.Result) bool {
+				if value.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var v string
+				v = value.Str
+				o.Value = append(o.Value, v)
+				return err == nil
+			})
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o SetStringExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -573,15 +1149,43 @@ func (o *SetStringExample) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type SnakeCaseObjectExample struct {
-	SnakeCasedField int `json:"snake_cased_field"`
+	SnakeCasedField int
+}
+
+func (o SnakeCaseObjectExample) MarshalJSON() ([]byte, error) {
+	type SnakeCaseObjectExampleAlias SnakeCaseObjectExample
+	return safejson.Marshal(SnakeCaseObjectExampleAlias(o))
+}
+
+func (o *SnakeCaseObjectExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "snake_cased_field":
+			if value.Type != gjson.Number {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.SnakeCasedField = int(value.Int())
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o SnakeCaseObjectExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -593,15 +1197,43 @@ func (o *SnakeCaseObjectExample) UnmarshalYAML(unmarshal func(interface{}) error
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type StringExample struct {
-	Value string `json:"value"`
+	Value string
+}
+
+func (o StringExample) MarshalJSON() ([]byte, error) {
+	type StringExampleAlias StringExample
+	return safejson.Marshal(StringExampleAlias(o))
+}
+
+func (o *StringExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.Value = value.Str
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o StringExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -613,15 +1245,43 @@ func (o *StringExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type UuidExample struct {
-	Value uuid.UUID `json:"value"`
+	Value uuid.UUID
+}
+
+func (o UuidExample) MarshalJSON() ([]byte, error) {
+	type UuidExampleAlias UuidExample
+	return safejson.Marshal(UuidExampleAlias(o))
+}
+
+func (o *UuidExample) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "value":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			err = o.Value.UnmarshalText([]byte(value.Str))
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o UuidExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -633,5 +1293,5 @@ func (o *UuidExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }

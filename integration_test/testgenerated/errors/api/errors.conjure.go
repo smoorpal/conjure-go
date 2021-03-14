@@ -12,18 +12,19 @@ import (
 	"github.com/palantir/pkg/safeyaml"
 	"github.com/palantir/pkg/uuid"
 	werror "github.com/palantir/witchcraft-go-error"
+	"github.com/tidwall/gjson"
 )
 
 type myInternal struct {
 	// This is safeArgA doc.
-	SafeArgA Basic `json:"safeArgA" conjure-docs:"This is safeArgA doc."`
+	SafeArgA Basic
 	// This is safeArgB doc.
-	SafeArgB []int `json:"safeArgB" conjure-docs:"This is safeArgB doc."`
+	SafeArgB []int
 	// A field named with a go keyword
-	Type       string  `json:"type" conjure-docs:"A field named with a go keyword"`
-	UnsafeArgA string  `json:"unsafeArgA"`
-	UnsafeArgB *string `json:"unsafeArgB"`
-	MyInternal string  `json:"myInternal"`
+	Type       string
+	UnsafeArgA string
+	UnsafeArgB *string
+	MyInternal string
 }
 
 func (o myInternal) MarshalJSON() ([]byte, error) {
@@ -35,20 +36,69 @@ func (o myInternal) MarshalJSON() ([]byte, error) {
 }
 
 func (o *myInternal) UnmarshalJSON(data []byte) error {
-	type myInternalAlias myInternal
-	var rawmyInternal myInternalAlias
-	if err := safejson.Unmarshal(data, &rawmyInternal); err != nil {
-		return err
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
 	}
-	if rawmyInternal.SafeArgB == nil {
-		rawmyInternal.SafeArgB = make([]int, 0)
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
 	}
-	*o = myInternal(rawmyInternal)
-	return nil
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "safeArgA":
+			err = o.SafeArgA.UnmarshalJSON([]byte(value.Raw))
+		case "safeArgB":
+			if !value.IsArray() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			value.ForEach(func(_, value gjson.Result) bool {
+				if value.Type != gjson.Number {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var v int
+				v = int(value.Int())
+				o.SafeArgB = append(o.SafeArgB, v)
+				return err == nil
+			})
+		case "type":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.Type = value.Str
+		case "unsafeArgA":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.UnsafeArgA = value.Str
+		case "unsafeArgB":
+			if value.Type != gjson.Null {
+				if value.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var v string
+				v = value.Str
+				o.UnsafeArgB = &v
+			}
+		case "myInternal":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.MyInternal = value.Str
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o myInternal) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +110,7 @@ func (o *myInternal) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 // NewMyInternal returns new instance of MyInternal error.
@@ -196,13 +246,13 @@ func (e *MyInternal) UnmarshalJSON(data []byte) error {
 
 type myNotFound struct {
 	// This is safeArgA doc.
-	SafeArgA Basic `json:"safeArgA" conjure-docs:"This is safeArgA doc."`
+	SafeArgA Basic
 	// This is safeArgB doc.
-	SafeArgB []int `json:"safeArgB" conjure-docs:"This is safeArgB doc."`
+	SafeArgB []int
 	// A field named with a go keyword
-	Type       string  `json:"type" conjure-docs:"A field named with a go keyword"`
-	UnsafeArgA string  `json:"unsafeArgA"`
-	UnsafeArgB *string `json:"unsafeArgB"`
+	Type       string
+	UnsafeArgA string
+	UnsafeArgB *string
 }
 
 func (o myNotFound) MarshalJSON() ([]byte, error) {
@@ -214,20 +264,63 @@ func (o myNotFound) MarshalJSON() ([]byte, error) {
 }
 
 func (o *myNotFound) UnmarshalJSON(data []byte) error {
-	type myNotFoundAlias myNotFound
-	var rawmyNotFound myNotFoundAlias
-	if err := safejson.Unmarshal(data, &rawmyNotFound); err != nil {
-		return err
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
 	}
-	if rawmyNotFound.SafeArgB == nil {
-		rawmyNotFound.SafeArgB = make([]int, 0)
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
 	}
-	*o = myNotFound(rawmyNotFound)
-	return nil
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "safeArgA":
+			err = o.SafeArgA.UnmarshalJSON([]byte(value.Raw))
+		case "safeArgB":
+			if !value.IsArray() {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			value.ForEach(func(_, value gjson.Result) bool {
+				if value.Type != gjson.Number {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var v int
+				v = int(value.Int())
+				o.SafeArgB = append(o.SafeArgB, v)
+				return err == nil
+			})
+		case "type":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.Type = value.Str
+		case "unsafeArgA":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.UnsafeArgA = value.Str
+		case "unsafeArgB":
+			if value.Type != gjson.Null {
+				if value.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var v string
+				v = value.Str
+				o.UnsafeArgB = &v
+			}
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o myNotFound) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +332,7 @@ func (o *myNotFound) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 // NewMyNotFound returns new instance of MyNotFound error.

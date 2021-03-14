@@ -3,12 +3,15 @@
 package api
 
 import (
+	"github.com/palantir/conjure-go-runtime/conjure-go-contract/errors"
+	"github.com/palantir/pkg/binary"
 	"github.com/palantir/pkg/safejson"
 	"github.com/palantir/pkg/safeyaml"
+	"github.com/tidwall/gjson"
 )
 
 type CustomObject struct {
-	Data []byte `json:"data"`
+	Data []byte
 }
 
 func (o CustomObject) MarshalJSON() ([]byte, error) {
@@ -20,20 +23,30 @@ func (o CustomObject) MarshalJSON() ([]byte, error) {
 }
 
 func (o *CustomObject) UnmarshalJSON(data []byte) error {
-	type CustomObjectAlias CustomObject
-	var rawCustomObject CustomObjectAlias
-	if err := safejson.Unmarshal(data, &rawCustomObject); err != nil {
-		return err
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
 	}
-	if rawCustomObject.Data == nil {
-		rawCustomObject.Data = make([]byte, 0)
+	value := gjson.ParseBytes(data)
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
 	}
-	*o = CustomObject(rawCustomObject)
-	return nil
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		switch key.Str {
+		case "data":
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			o.Data, err = binary.Binary(value.Str).Bytes()
+		}
+		return err == nil
+	})
+	return err
 }
 
 func (o CustomObject) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := o.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -45,5 +58,5 @@ func (o *CustomObject) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }

@@ -29,7 +29,7 @@ func (a *OptionalUuidAlias) UnmarshalText(data []byte) error {
 }
 
 func (a OptionalUuidAlias) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(a)
+	jsonBytes, err := a.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (a *OptionalUuidAlias) UnmarshalYAML(unmarshal func(interface{}) error) err
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&a)
+	return a.UnmarshalJSON(jsonBytes)
 }
 
 type RidAlias rid.ResourceIdentifier
@@ -63,22 +63,6 @@ func (a *RidAlias) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (a RidAlias) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(a)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (a *RidAlias) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return safejson.Unmarshal(jsonBytes, *&a)
-}
-
 type UuidAlias uuid.UUID
 
 func (a UuidAlias) String() string {
@@ -98,22 +82,6 @@ func (a *UuidAlias) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (a UuidAlias) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(a)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (a *UuidAlias) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return safejson.Unmarshal(jsonBytes, *&a)
-}
-
 type UuidAlias2 Compound
 
 func (a UuidAlias2) MarshalJSON() ([]byte, error) {
@@ -130,7 +98,7 @@ func (a *UuidAlias2) UnmarshalJSON(data []byte) error {
 }
 
 func (a UuidAlias2) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(a)
+	jsonBytes, err := a.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -142,5 +110,5 @@ func (a *UuidAlias2) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&a)
+	return a.UnmarshalJSON(jsonBytes)
 }

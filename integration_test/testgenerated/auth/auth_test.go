@@ -21,7 +21,6 @@ import (
 	"github.com/palantir/conjure-go-runtime/v2/conjure-go-client/httpclient"
 	"github.com/palantir/conjure-go-runtime/v2/conjure-go-contract/errors"
 	"github.com/palantir/pkg/bearertoken"
-	"github.com/palantir/pkg/binary"
 	"github.com/palantir/witchcraft-go-server/v2/witchcraft"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -150,9 +149,6 @@ func TestTokenProviderClient(t *testing.T) {
 	require.NoError(t, err)
 	err = tokenClient.None(ctx)
 	require.NoError(t, err)
-
-	binary.Binary()
-
 }
 
 type bothAuthImpl struct{}
