@@ -200,23 +200,33 @@ func (t *mapType) ImportPaths() []string {
 	return append(t.keyType.ImportPaths(), t.valType.ImportPaths()...)
 }
 
-type singleGenericValType struct {
-	valType   Typer
-	fmtString string
+type iterableValType struct {
+	valType Typer
 }
 
-func (t *singleGenericValType) GoType(info PkgInfo) string {
-	return fmt.Sprintf(t.fmtString, t.valType.GoType(info))
+func (t *iterableValType) GoType(info PkgInfo) string {
+	return fmt.Sprintf("[]%s", t.valType.GoType(info))
 }
 
-func (t *singleGenericValType) ImportPaths() []string {
+func (t *iterableValType) ImportPaths() []string {
+	return t.valType.ImportPaths()
+}
+
+type optionalGenericValType struct {
+	valType Typer
+}
+
+func (t *optionalGenericValType) GoType(info PkgInfo) string {
+	return fmt.Sprintf("*%s", t.valType.GoType(info))
+}
+
+func (t *optionalGenericValType) ImportPaths() []string {
 	return t.valType.ImportPaths()
 }
 
 func NewListType(valType Typer) Typer {
-	return &singleGenericValType{
-		valType:   valType,
-		fmtString: "[]%s",
+	return &iterableValType{
+		valType: valType,
 	}
 }
 
@@ -232,9 +242,8 @@ func NewSetType(valType Typer) Typer {
 }
 
 func NewOptionalType(valType Typer) Typer {
-	return &singleGenericValType{
-		valType:   valType,
-		fmtString: "*%s",
+	return &optionalGenericValType{
+		valType: valType,
 	}
 }
 
@@ -329,4 +338,20 @@ func (f *funcType) ImportPaths() []string {
 		importPaths = append(importPaths, out.ImportPaths()...)
 	}
 	return importPaths
+}
+
+// MapBinaryTypeToReadCloserType replaces BinaryType and OptionalType<BinaryType> with IOReadCloserType and
+// OptionalType<IOReadCloserType> respectively. It also returns IOReadCloserType's imports if a binary
+// reference is found.
+func MapBinaryTypeToReadCloserType(valType Typer) (Typer, []string) {
+	if valType == BinaryType {
+		return IOReadCloserType, IOReadCloserType.ImportPaths()
+	}
+	if v, ok := valType.(*optionalGenericValType); ok {
+		typer, importPaths := MapBinaryTypeToReadCloserType(v.valType)
+		return &optionalGenericValType{
+			valType: typer,
+		}, importPaths
+	}
+	return valType, nil
 }

@@ -833,6 +833,26 @@ func (u *ExampleUnion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return safejson.Unmarshal(jsonBytes, *&u)
 }
 
+func (u *ExampleUnion) AcceptFuncs(strFunc func(string) error, otherFunc func(string) error, myMapFunc func(map[string][]int) error, testerFunc func(datasets.TestType) error, recursiveFunc func(ExampleUnion) error, unknownFunc func(string) error) error {
+	switch u.typ {
+	default:
+		if u.typ == "" {
+			return fmt.Errorf("invalid value in union type")
+		}
+		return unknownFunc(u.typ)
+	case "str":
+		return strFunc(*u.str)
+	case "other":
+		return otherFunc(*u.other)
+	case "myMap":
+		return myMapFunc(*u.myMap)
+	case "tester":
+		return testerFunc(*u.tester)
+	case "recursive":
+		return recursiveFunc(*u.recursive)
+	}
+}
+
 func (u *ExampleUnion) Accept(v ExampleUnionVisitor) error {
 	switch u.typ {
 	default:
@@ -987,6 +1007,25 @@ func NewExampleUnionFromRecursive(v ExampleUnion) ExampleUnion {
 		},
 		"markers" : [ ]
 		}, {
+		"endpointName" : "maybeStreamResponse",
+		"httpMethod" : "GET",
+		"httpPath" : "/catalog/maybe/streamResponse",
+		"auth" : {
+			"type" : "header",
+			"header" : { }
+		},
+		"args" : [ ],
+		"returns" : {
+			"type" : "optional",
+			"optional" : {
+				"itemType" : {
+				  "type" : "primitive",
+				  "primitive" : "BINARY"
+				}
+			}
+		},
+		"markers" : [ ]
+		}, {
 		"endpointName" : "queryParams",
 		"httpMethod" : "GET",
 		"httpPath" : "/catalog/echo",
@@ -1032,6 +1071,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 
 	"github.com/palantir/conjure-go-runtime/v2/conjure-go-client/httpclient"
@@ -1044,6 +1084,7 @@ type TestServiceClient interface {
 	GetFileSystems(ctx context.Context, authHeader bearertoken.Token) (map[string]int, error)
 	CreateDataset(ctx context.Context, cookieToken bearertoken.Token, requestArg string) error
 	StreamResponse(ctx context.Context, authHeader bearertoken.Token) (io.ReadCloser, error)
+	MaybeStreamResponse(ctx context.Context, authHeader bearertoken.Token) (*io.ReadCloser, error)
 	QueryParams(ctx context.Context, inputArg string, repsArg int) error
 }
 
@@ -1103,6 +1144,23 @@ func (c *testServiceClient) StreamResponse(ctx context.Context, authHeader beare
 	return resp.Body, nil
 }
 
+func (c *testServiceClient) MaybeStreamResponse(ctx context.Context, authHeader bearertoken.Token) (*io.ReadCloser, error) {
+	var requestParams []httpclient.RequestParam
+	requestParams = append(requestParams, httpclient.WithRPCMethodName("MaybeStreamResponse"))
+	requestParams = append(requestParams, httpclient.WithRequestMethod("GET"))
+	requestParams = append(requestParams, httpclient.WithHeader("Authorization", fmt.Sprint("Bearer ", authHeader)))
+	requestParams = append(requestParams, httpclient.WithPathf("/catalog/maybe/streamResponse"))
+	requestParams = append(requestParams, httpclient.WithRawResponseBody())
+	resp, err := c.client.Do(ctx, requestParams...)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode == http.StatusNoContent {
+		return nil, nil
+	}
+	return &resp.Body, nil
+}
+
 func (c *testServiceClient) QueryParams(ctx context.Context, inputArg string, repsArg int) error {
 	var requestParams []httpclient.RequestParam
 	requestParams = append(requestParams, httpclient.WithRPCMethodName("QueryParams"))
@@ -1126,6 +1184,7 @@ type TestServiceClientWithAuth interface {
 	GetFileSystems(ctx context.Context) (map[string]int, error)
 	CreateDataset(ctx context.Context, requestArg string) error
 	StreamResponse(ctx context.Context) (io.ReadCloser, error)
+	MaybeStreamResponse(ctx context.Context) (*io.ReadCloser, error)
 	QueryParams(ctx context.Context, inputArg string, repsArg int) error
 }
 
@@ -1149,6 +1208,10 @@ func (c *testServiceClientWithAuth) CreateDataset(ctx context.Context, requestAr
 
 func (c *testServiceClientWithAuth) StreamResponse(ctx context.Context) (io.ReadCloser, error) {
 	return c.client.StreamResponse(ctx, c.authHeader)
+}
+
+func (c *testServiceClientWithAuth) MaybeStreamResponse(ctx context.Context) (*io.ReadCloser, error) {
+	return c.client.MaybeStreamResponse(ctx, c.authHeader)
 }
 
 func (c *testServiceClientWithAuth) QueryParams(ctx context.Context, inputArg string, repsArg int) error {
@@ -1985,6 +2048,24 @@ func (u *ExampleUnion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return safejson.Unmarshal(jsonBytes, *&u)
 }
 
+func (u *ExampleUnion) AcceptFuncs(strFunc func(string) error, otherFunc func(string) error, myMapFunc func(map[string][]int) error, recursiveFunc func(ExampleUnion) error, unknownFunc func(string) error) error {
+	switch u.typ {
+	default:
+		if u.typ == "" {
+			return fmt.Errorf("invalid value in union type")
+		}
+		return unknownFunc(u.typ)
+	case "str":
+		return strFunc(*u.str)
+	case "other":
+		return otherFunc(*u.other)
+	case "myMap":
+		return myMapFunc(*u.myMap)
+	case "recursive":
+		return recursiveFunc(*u.recursive)
+	}
+}
+
 func (u *ExampleUnion) Accept(v ExampleUnionVisitor) error {
 	switch u.typ {
 	default:
@@ -2117,6 +2198,20 @@ func (u *OtherUnion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 	return safejson.Unmarshal(jsonBytes, *&u)
+}
+
+func (u *OtherUnion) AcceptFuncs(strFunc func(string) error, myMapFunc func(map[string]int) error, unknownFunc func(string) error) error {
+	switch u.typ {
+	default:
+		if u.typ == "" {
+			return fmt.Errorf("invalid value in union type")
+		}
+		return unknownFunc(u.typ)
+	case "str":
+		return strFunc(*u.str)
+	case "myMap":
+		return myMapFunc(*u.myMap)
+	}
 }
 
 func (u *OtherUnion) Accept(v OtherUnionVisitor) error {
@@ -2738,7 +2833,7 @@ func TestGenerate(t *testing.T) {
 			ir, err := readConjureIRFromJSON([]byte(currCase.src))
 			require.NoError(t, err, "Case %d: %s", currCaseNum, currCase.name)
 
-			err = Generate(ir, OutputConfiguration{OutputDir: currCaseTmpDir})
+			err = Generate(ir, OutputConfiguration{OutputDir: currCaseTmpDir, GenerateFuncsVisitor: true})
 			require.NoError(t, err, "Case %d: %s", currCaseNum, currCase.name)
 
 			for k, wantSrc := range currCase.wantFiles {
