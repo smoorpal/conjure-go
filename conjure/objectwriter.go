@@ -15,6 +15,7 @@
 package conjure
 
 import (
+	"fmt"
 	"go/token"
 
 	"github.com/palantir/goastwriter/astgen"
@@ -54,6 +55,7 @@ func astForObject(objectDefinition spec.ObjectDefinition, info types.PkgInfo) ([
 		structFields = append(structFields, &expression.StructField{
 			Name:    transforms.ExportedFieldName(string(fieldDefinition.FieldName)),
 			Type:    expression.Type(typer.GoType(info)),
+			Tag:     fmt.Sprintf("json:%q", fieldDefinition.FieldName),
 			Comment: transforms.Documentation(fieldDefinition.Docs),
 		})
 	}

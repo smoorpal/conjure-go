@@ -27,7 +27,6 @@ require (
 	github.com/palantir/witchcraft-go-params v1.2.0
 	github.com/palantir/witchcraft-go-server/v2 v2.5.1
 	github.com/pkg/errors v0.9.1
-	github.com/pquerna/ffjson v0.0.0-20190930134022-aa0246cd15f7
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/gjson v1.6.8

@@ -12,19 +12,20 @@ import (
 	"github.com/palantir/pkg/safeyaml"
 	"github.com/palantir/pkg/uuid"
 	werror "github.com/palantir/witchcraft-go-error"
+	wparams "github.com/palantir/witchcraft-go-params"
 	"github.com/tidwall/gjson"
 )
 
 type myInternal struct {
 	// This is safeArgA doc.
-	SafeArgA Basic
+	SafeArgA Basic `json:"safeArgA"`
 	// This is safeArgB doc.
-	SafeArgB []int
+	SafeArgB []int `json:"safeArgB"`
 	// A field named with a go keyword
-	Type       string
-	UnsafeArgA string
-	UnsafeArgB *string
-	MyInternal string
+	Type       string  `json:"type"`
+	UnsafeArgA string  `json:"unsafeArgA"`
+	UnsafeArgB *string `json:"unsafeArgB"`
+	MyInternal string  `json:"myInternal"`
 }
 
 func (o myInternal) MarshalJSON() ([]byte, error) {
@@ -43,10 +44,19 @@ func (o *myInternal) UnmarshalJSON(data []byte) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
+	var seenSafeArgA bool
+	o.SafeArgB = make([]int, 0)
+	var seenType bool
+	var seenUnsafeArgA bool
+	var seenMyInternal bool
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
+		if value.Type == gjson.Null {
+			return true
+		}
 		switch key.Str {
 		case "safeArgA":
+			seenSafeArgA = true
 			err = o.SafeArgA.UnmarshalJSON([]byte(value.Raw))
 		case "safeArgB":
 			if !value.IsArray() {
@@ -58,18 +68,20 @@ func (o *myInternal) UnmarshalJSON(data []byte) error {
 					err = errors.NewInvalidArgument()
 					return false
 				}
-				var v int
-				v = int(value.Int())
-				o.SafeArgB = append(o.SafeArgB, v)
+				var listElement int
+				listElement = int(value.Int())
+				o.SafeArgB = append(o.SafeArgB, listElement)
 				return err == nil
 			})
 		case "type":
+			seenType = true
 			if value.Type != gjson.String {
 				err = errors.NewInvalidArgument()
 				return false
 			}
 			o.Type = value.Str
 		case "unsafeArgA":
+			seenUnsafeArgA = true
 			if value.Type != gjson.String {
 				err = errors.NewInvalidArgument()
 				return false
@@ -81,11 +93,12 @@ func (o *myInternal) UnmarshalJSON(data []byte) error {
 					err = errors.NewInvalidArgument()
 					return false
 				}
-				var v string
-				v = value.Str
-				o.UnsafeArgB = &v
+				var optionalValue string
+				optionalValue = value.Str
+				o.UnsafeArgB = &optionalValue
 			}
 		case "myInternal":
+			seenMyInternal = true
 			if value.Type != gjson.String {
 				err = errors.NewInvalidArgument()
 				return false
@@ -94,11 +107,30 @@ func (o *myInternal) UnmarshalJSON(data []byte) error {
 		}
 		return err == nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	var missingFields []string
+	if !seenSafeArgA {
+		missingFields = append(missingFields, "safeArgA")
+	}
+	if !seenType {
+		missingFields = append(missingFields, "type")
+	}
+	if !seenUnsafeArgA {
+		missingFields = append(missingFields, "unsafeArgA")
+	}
+	if !seenMyInternal {
+		missingFields = append(missingFields, "myInternal")
+	}
+	if len(missingFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+	}
+	return nil
 }
 
 func (o myInternal) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := o.MarshalJSON()
+	jsonBytes, err := safejson.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +142,7 @@ func (o *myInternal) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return o.UnmarshalJSON(jsonBytes)
+	return safejson.Unmarshal(jsonBytes, *&o)
 }
 
 // NewMyInternal returns new instance of MyInternal error.
@@ -246,13 +278,13 @@ func (e *MyInternal) UnmarshalJSON(data []byte) error {
 
 type myNotFound struct {
 	// This is safeArgA doc.
-	SafeArgA Basic
+	SafeArgA Basic `json:"safeArgA"`
 	// This is safeArgB doc.
-	SafeArgB []int
+	SafeArgB []int `json:"safeArgB"`
 	// A field named with a go keyword
-	Type       string
-	UnsafeArgA string
-	UnsafeArgB *string
+	Type       string  `json:"type"`
+	UnsafeArgA string  `json:"unsafeArgA"`
+	UnsafeArgB *string `json:"unsafeArgB"`
 }
 
 func (o myNotFound) MarshalJSON() ([]byte, error) {
@@ -271,10 +303,18 @@ func (o *myNotFound) UnmarshalJSON(data []byte) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
+	var seenSafeArgA bool
+	o.SafeArgB = make([]int, 0)
+	var seenType bool
+	var seenUnsafeArgA bool
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
+		if value.Type == gjson.Null {
+			return true
+		}
 		switch key.Str {
 		case "safeArgA":
+			seenSafeArgA = true
 			err = o.SafeArgA.UnmarshalJSON([]byte(value.Raw))
 		case "safeArgB":
 			if !value.IsArray() {
@@ -286,18 +326,20 @@ func (o *myNotFound) UnmarshalJSON(data []byte) error {
 					err = errors.NewInvalidArgument()
 					return false
 				}
-				var v int
-				v = int(value.Int())
-				o.SafeArgB = append(o.SafeArgB, v)
+				var listElement int
+				listElement = int(value.Int())
+				o.SafeArgB = append(o.SafeArgB, listElement)
 				return err == nil
 			})
 		case "type":
+			seenType = true
 			if value.Type != gjson.String {
 				err = errors.NewInvalidArgument()
 				return false
 			}
 			o.Type = value.Str
 		case "unsafeArgA":
+			seenUnsafeArgA = true
 			if value.Type != gjson.String {
 				err = errors.NewInvalidArgument()
 				return false
@@ -309,18 +351,34 @@ func (o *myNotFound) UnmarshalJSON(data []byte) error {
 					err = errors.NewInvalidArgument()
 					return false
 				}
-				var v string
-				v = value.Str
-				o.UnsafeArgB = &v
+				var optionalValue string
+				optionalValue = value.Str
+				o.UnsafeArgB = &optionalValue
 			}
 		}
 		return err == nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	var missingFields []string
+	if !seenSafeArgA {
+		missingFields = append(missingFields, "safeArgA")
+	}
+	if !seenType {
+		missingFields = append(missingFields, "type")
+	}
+	if !seenUnsafeArgA {
+		missingFields = append(missingFields, "unsafeArgA")
+	}
+	if len(missingFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+	}
+	return nil
 }
 
 func (o myNotFound) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := o.MarshalJSON()
+	jsonBytes, err := safejson.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -332,7 +390,7 @@ func (o *myNotFound) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return o.UnmarshalJSON(jsonBytes)
+	return safejson.Unmarshal(jsonBytes, *&o)
 }
 
 // NewMyNotFound returns new instance of MyNotFound error.

@@ -29,7 +29,7 @@ func (a *OptionalUuidAlias) UnmarshalText(data []byte) error {
 }
 
 func (a OptionalUuidAlias) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := a.MarshalJSON()
+	jsonBytes, err := safejson.Marshal(a)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (a *OptionalUuidAlias) UnmarshalYAML(unmarshal func(interface{}) error) err
 	if err != nil {
 		return err
 	}
-	return a.UnmarshalJSON(jsonBytes)
+	return safejson.Unmarshal(jsonBytes, *&a)
 }
 
 type RidAlias rid.ResourceIdentifier
@@ -98,7 +98,7 @@ func (a *UuidAlias2) UnmarshalJSON(data []byte) error {
 }
 
 func (a UuidAlias2) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := a.MarshalJSON()
+	jsonBytes, err := safejson.Marshal(a)
 	if err != nil {
 		return nil, err
 	}
@@ -110,5 +110,5 @@ func (a *UuidAlias2) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return a.UnmarshalJSON(jsonBytes)
+	return safejson.Unmarshal(jsonBytes, *&a)
 }

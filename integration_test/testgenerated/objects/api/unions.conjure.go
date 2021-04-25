@@ -72,7 +72,7 @@ func (u *ExampleUnion) UnmarshalJSON(data []byte) error {
 }
 
 func (u ExampleUnion) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := u.MarshalJSON()
+	jsonBytes, err := safejson.Marshal(u)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (u *ExampleUnion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return u.UnmarshalJSON(jsonBytes)
+	return safejson.Unmarshal(jsonBytes, *&u)
 }
 
 func (u *ExampleUnion) Accept(v ExampleUnionVisitor) error {
