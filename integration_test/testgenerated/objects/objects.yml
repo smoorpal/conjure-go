@@ -13,6 +13,14 @@ types:
       Compound:
         fields:
           obj: Collections
+      DoubleObj:
+        fields:
+          double: double
+          doubleOptional: optional<double>
+          strOptional: optional<string>
+      NestedCollections:
+        fields:
+          collection: map<string, list<optional<string>>>
       ExampleUnion:
         union:
           str: string

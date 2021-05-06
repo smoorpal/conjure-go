@@ -4,10 +4,14 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
+	"github.com/palantir/conjure-go-runtime/v2/conjure-go-contract/errors"
 	"github.com/palantir/pkg/safejson"
 	"github.com/palantir/pkg/safeyaml"
+	wparams "github.com/palantir/witchcraft-go-params"
+	"github.com/tidwall/gjson"
 )
 
 type ExampleUnion struct {
@@ -15,17 +19,6 @@ type ExampleUnion struct {
 	str         *string
 	strOptional **string
 	other       *int
-}
-
-type exampleUnionDeserializer struct {
-	Type        string   `json:"type"`
-	Str         *string  `json:"str"`
-	StrOptional **string `json:"strOptional"`
-	Other       *int     `json:"other"`
-}
-
-func (u *exampleUnionDeserializer) toStruct() ExampleUnion {
-	return ExampleUnion{typ: u.Type, str: u.Str, strOptional: u.StrOptional, other: u.Other}
 }
 
 func (u *ExampleUnion) toSerializer() (interface{}, error) {
@@ -62,17 +55,8 @@ func (u ExampleUnion) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(ser)
 }
 
-func (u *ExampleUnion) UnmarshalJSON(data []byte) error {
-	var deser exampleUnionDeserializer
-	if err := safejson.Unmarshal(data, &deser); err != nil {
-		return err
-	}
-	*u = deser.toStruct()
-	return nil
-}
-
 func (u ExampleUnion) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(u)
+	jsonBytes, err := json.Marshal(u)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +68,111 @@ func (u *ExampleUnion) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&u)
+	return u.UnmarshalJSON(jsonBytes)
+}
+
+func (u *ExampleUnion) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return u.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (u *ExampleUnion) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return u.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (u *ExampleUnion) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return u.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (u *ExampleUnion) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return u.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (u *ExampleUnion) unmarshalGJSON(value gjson.Result, strict bool) error {
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var seentyp bool
+	var unrecognizedFields []string
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		if value.Type == gjson.Null {
+			return true
+		}
+		switch key.Str {
+		case "type":
+			seentyp = true
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			u.typ = value.Str
+		case "str":
+			if value.Type != gjson.Null {
+				if value.Type != gjson.String {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var optionalValue string
+				optionalValue = value.Str
+				u.str = &optionalValue
+			}
+		case "strOptional":
+			if value.Type != gjson.Null {
+				var optionalValue *string
+				if value.Type != gjson.Null {
+					if value.Type != gjson.String {
+						err = errors.NewInvalidArgument()
+						return false
+					}
+					var optionalValue1 string
+					optionalValue1 = value.Str
+					optionalValue = &optionalValue1
+				}
+				u.strOptional = &optionalValue
+			}
+		case "other":
+			if value.Type != gjson.Null {
+				if value.Type != gjson.Number {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var optionalValue int
+				optionalValue = int(value.Int())
+				u.other = &optionalValue
+			}
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
+		}
+		return err == nil
+	})
+	if err != nil {
+		return err
+	}
+	var missingFields []string
+	if !seentyp {
+		missingFields = append(missingFields, "type")
+	}
+	if len(missingFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
+	return nil
 }
 
 func (u *ExampleUnion) AcceptFuncs(strFunc func(string) error, strOptionalFunc func(*string) error, otherFunc func(int) error, unknownFunc func(string) error) error {

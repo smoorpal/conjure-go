@@ -3,6 +3,9 @@
 package types
 
 import (
+	"encoding/json"
+	"math"
+
 	"github.com/palantir/conjure-go-runtime/v2/conjure-go-contract/errors"
 	"github.com/palantir/pkg/bearertoken"
 	"github.com/palantir/pkg/binary"
@@ -29,11 +32,36 @@ func (o *AnyExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *AnyExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *AnyExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *AnyExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *AnyExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	var seenValue bool
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -47,6 +75,10 @@ func (o *AnyExample) UnmarshalJSON(data []byte) error {
 				return false
 			}
 			o.Value = value.Value()
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
@@ -60,11 +92,14 @@ func (o *AnyExample) UnmarshalJSON(data []byte) error {
 	if len(missingFields) > 0 {
 		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
 	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
 	return nil
 }
 
 func (o AnyExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +111,7 @@ func (o *AnyExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type BearerTokenExample struct {
@@ -92,11 +127,36 @@ func (o *BearerTokenExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *BearerTokenExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *BearerTokenExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *BearerTokenExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *BearerTokenExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	var seenValue bool
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -110,6 +170,10 @@ func (o *BearerTokenExample) UnmarshalJSON(data []byte) error {
 				return false
 			}
 			err = o.Value.UnmarshalText([]byte(value.Str))
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
@@ -123,11 +187,14 @@ func (o *BearerTokenExample) UnmarshalJSON(data []byte) error {
 	if len(missingFields) > 0 {
 		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
 	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
 	return nil
 }
 
 func (o BearerTokenExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +206,7 @@ func (o *BearerTokenExample) UnmarshalYAML(unmarshal func(interface{}) error) er
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type BinaryExample struct {
@@ -158,11 +225,36 @@ func (o *BinaryExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *BinaryExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *BinaryExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *BinaryExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *BinaryExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	o.Value = make([]byte, 0)
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -175,14 +267,24 @@ func (o *BinaryExample) UnmarshalJSON(data []byte) error {
 				return false
 			}
 			o.Value, err = binary.Binary(value.Str).Bytes()
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
+	return nil
 }
 
 func (o BinaryExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +296,7 @@ func (o *BinaryExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type BooleanExample struct {
@@ -210,11 +312,36 @@ func (o *BooleanExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *BooleanExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *BooleanExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *BooleanExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *BooleanExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	var seenValue bool
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -228,6 +355,10 @@ func (o *BooleanExample) UnmarshalJSON(data []byte) error {
 				return false
 			}
 			o.Value = value.Bool()
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
@@ -241,11 +372,14 @@ func (o *BooleanExample) UnmarshalJSON(data []byte) error {
 	if len(missingFields) > 0 {
 		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
 	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
 	return nil
 }
 
 func (o BooleanExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +391,7 @@ func (o *BooleanExample) UnmarshalYAML(unmarshal func(interface{}) error) error 
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type DateTimeExample struct {
@@ -273,11 +407,36 @@ func (o *DateTimeExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *DateTimeExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *DateTimeExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *DateTimeExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *DateTimeExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	var seenValue bool
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -291,6 +450,10 @@ func (o *DateTimeExample) UnmarshalJSON(data []byte) error {
 				return false
 			}
 			err = o.Value.UnmarshalText([]byte(value.Str))
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
@@ -304,11 +467,14 @@ func (o *DateTimeExample) UnmarshalJSON(data []byte) error {
 	if len(missingFields) > 0 {
 		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
 	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
 	return nil
 }
 
 func (o DateTimeExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +486,7 @@ func (o *DateTimeExample) UnmarshalYAML(unmarshal func(interface{}) error) error
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type DoubleExample struct {
@@ -336,11 +502,36 @@ func (o *DoubleExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *DoubleExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *DoubleExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *DoubleExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *DoubleExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	var seenValue bool
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -353,7 +544,28 @@ func (o *DoubleExample) UnmarshalJSON(data []byte) error {
 				err = errors.NewInvalidArgument()
 				return false
 			}
+			switch value.Type {
+			case gjson.Number:
+				o.Value = value.Num
+			case gjson.String:
+				switch value.Str {
+				case "NaN":
+					o.Value = math.NaN()
+				case "Infinity":
+					o.Value = math.Inf(1)
+				case "-Infinity":
+					o.Value = math.Inf(-1)
+				default:
+					err = errors.NewInvalidArgument()
+				}
+			default:
+				err = errors.NewInvalidArgument()
+			}
 			o.Value = value.Num
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
@@ -367,11 +579,14 @@ func (o *DoubleExample) UnmarshalJSON(data []byte) error {
 	if len(missingFields) > 0 {
 		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
 	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
 	return nil
 }
 
 func (o DoubleExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -383,7 +598,7 @@ func (o *DoubleExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type EmptyObjectExample struct {
@@ -402,11 +617,36 @@ func (o *EnumFieldExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *EnumFieldExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *EnumFieldExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *EnumFieldExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *EnumFieldExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	var seenEnum bool
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -420,6 +660,10 @@ func (o *EnumFieldExample) UnmarshalJSON(data []byte) error {
 				return false
 			}
 			err = o.Enum.UnmarshalText([]byte(value.Str))
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
@@ -433,11 +677,14 @@ func (o *EnumFieldExample) UnmarshalJSON(data []byte) error {
 	if len(missingFields) > 0 {
 		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
 	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
 	return nil
 }
 
 func (o EnumFieldExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -449,7 +696,7 @@ func (o *EnumFieldExample) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type IntegerExample struct {
@@ -465,11 +712,36 @@ func (o *IntegerExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *IntegerExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *IntegerExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *IntegerExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *IntegerExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	var seenValue bool
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -483,6 +755,10 @@ func (o *IntegerExample) UnmarshalJSON(data []byte) error {
 				return false
 			}
 			o.Value = int(value.Int())
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
@@ -496,11 +772,14 @@ func (o *IntegerExample) UnmarshalJSON(data []byte) error {
 	if len(missingFields) > 0 {
 		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
 	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
 	return nil
 }
 
 func (o IntegerExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -512,7 +791,7 @@ func (o *IntegerExample) UnmarshalYAML(unmarshal func(interface{}) error) error 
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type KebabCaseObjectExample struct {
@@ -528,11 +807,36 @@ func (o *KebabCaseObjectExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *KebabCaseObjectExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *KebabCaseObjectExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *KebabCaseObjectExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *KebabCaseObjectExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	var seenKebabCasedField bool
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -546,6 +850,10 @@ func (o *KebabCaseObjectExample) UnmarshalJSON(data []byte) error {
 				return false
 			}
 			o.KebabCasedField = int(value.Int())
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
@@ -559,11 +867,14 @@ func (o *KebabCaseObjectExample) UnmarshalJSON(data []byte) error {
 	if len(missingFields) > 0 {
 		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
 	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
 	return nil
 }
 
 func (o KebabCaseObjectExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -575,7 +886,7 @@ func (o *KebabCaseObjectExample) UnmarshalYAML(unmarshal func(interface{}) error
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type ListExample struct {
@@ -594,11 +905,36 @@ func (o *ListExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *ListExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *ListExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *ListExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *ListExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	o.Value = make([]string, 0)
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -620,14 +956,24 @@ func (o *ListExample) UnmarshalJSON(data []byte) error {
 				o.Value = append(o.Value, listElement)
 				return err == nil
 			})
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
+	return nil
 }
 
 func (o ListExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -639,7 +985,7 @@ func (o *ListExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type LongFieldNameOptionalExample struct {
@@ -655,10 +1001,35 @@ func (o *LongFieldNameOptionalExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *LongFieldNameOptionalExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *LongFieldNameOptionalExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *LongFieldNameOptionalExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *LongFieldNameOptionalExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -675,14 +1046,24 @@ func (o *LongFieldNameOptionalExample) UnmarshalJSON(data []byte) error {
 				optionalValue = value.Str
 				o.SomeLongName = &optionalValue
 			}
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
+	return nil
 }
 
 func (o LongFieldNameOptionalExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -694,7 +1075,7 @@ func (o *LongFieldNameOptionalExample) UnmarshalYAML(unmarshal func(interface{})
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type MapExample struct {
@@ -713,11 +1094,36 @@ func (o *MapExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *MapExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *MapExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *MapExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *MapExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	o.Value = make(map[string]string, 0)
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -748,14 +1154,24 @@ func (o *MapExample) UnmarshalJSON(data []byte) error {
 				o.Value[mapKey] = mapVal
 				return err == nil
 			})
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
+	return nil
 }
 
 func (o MapExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -767,7 +1183,7 @@ func (o *MapExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type ObjectExample struct {
@@ -799,7 +1215,31 @@ func (o *ObjectExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *ObjectExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *ObjectExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *ObjectExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *ObjectExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
@@ -810,6 +1250,7 @@ func (o *ObjectExample) UnmarshalJSON(data []byte) error {
 	o.Set = make([]string, 0)
 	o.Map = make(map[string]string, 0)
 	var seenAlias bool
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -835,6 +1276,23 @@ func (o *ObjectExample) UnmarshalJSON(data []byte) error {
 			if value.Type != gjson.Number {
 				err = errors.NewInvalidArgument()
 				return false
+			}
+			switch value.Type {
+			case gjson.Number:
+				o.DoubleValue = value.Num
+			case gjson.String:
+				switch value.Str {
+				case "NaN":
+					o.DoubleValue = math.NaN()
+				case "Infinity":
+					o.DoubleValue = math.Inf(1)
+				case "-Infinity":
+					o.DoubleValue = math.Inf(-1)
+				default:
+					err = errors.NewInvalidArgument()
+				}
+			default:
+				err = errors.NewInvalidArgument()
 			}
 			o.DoubleValue = value.Num
 		case "optionalItem":
@@ -908,6 +1366,10 @@ func (o *ObjectExample) UnmarshalJSON(data []byte) error {
 				return false
 			}
 			o.Alias = StringAliasExample(value.Str)
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
@@ -930,11 +1392,14 @@ func (o *ObjectExample) UnmarshalJSON(data []byte) error {
 	if len(missingFields) > 0 {
 		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
 	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
 	return nil
 }
 
 func (o ObjectExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -946,7 +1411,7 @@ func (o *ObjectExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type OptionalBooleanExample struct {
@@ -962,10 +1427,35 @@ func (o *OptionalBooleanExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *OptionalBooleanExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *OptionalBooleanExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *OptionalBooleanExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *OptionalBooleanExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -982,14 +1472,24 @@ func (o *OptionalBooleanExample) UnmarshalJSON(data []byte) error {
 				optionalValue = value.Bool()
 				o.Value = &optionalValue
 			}
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
+	return nil
 }
 
 func (o OptionalBooleanExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -1001,7 +1501,7 @@ func (o *OptionalBooleanExample) UnmarshalYAML(unmarshal func(interface{}) error
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type OptionalExample struct {
@@ -1017,10 +1517,35 @@ func (o *OptionalExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *OptionalExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *OptionalExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *OptionalExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *OptionalExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -1037,14 +1562,24 @@ func (o *OptionalExample) UnmarshalJSON(data []byte) error {
 				optionalValue = value.Str
 				o.Value = &optionalValue
 			}
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
+	return nil
 }
 
 func (o OptionalExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -1056,7 +1591,7 @@ func (o *OptionalExample) UnmarshalYAML(unmarshal func(interface{}) error) error
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type OptionalIntegerExample struct {
@@ -1072,10 +1607,35 @@ func (o *OptionalIntegerExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *OptionalIntegerExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *OptionalIntegerExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *OptionalIntegerExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *OptionalIntegerExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -1092,14 +1652,24 @@ func (o *OptionalIntegerExample) UnmarshalJSON(data []byte) error {
 				optionalValue = int(value.Int())
 				o.Value = &optionalValue
 			}
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
+	return nil
 }
 
 func (o OptionalIntegerExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -1111,7 +1681,7 @@ func (o *OptionalIntegerExample) UnmarshalYAML(unmarshal func(interface{}) error
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type RidExample struct {
@@ -1127,11 +1697,36 @@ func (o *RidExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *RidExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *RidExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *RidExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *RidExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	var seenValue bool
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -1145,6 +1740,10 @@ func (o *RidExample) UnmarshalJSON(data []byte) error {
 				return false
 			}
 			err = o.Value.UnmarshalText([]byte(value.Str))
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
@@ -1158,11 +1757,14 @@ func (o *RidExample) UnmarshalJSON(data []byte) error {
 	if len(missingFields) > 0 {
 		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
 	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
 	return nil
 }
 
 func (o RidExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -1174,7 +1776,7 @@ func (o *RidExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type SafeLongExample struct {
@@ -1190,11 +1792,36 @@ func (o *SafeLongExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *SafeLongExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *SafeLongExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *SafeLongExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *SafeLongExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	var seenValue bool
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -1208,6 +1835,10 @@ func (o *SafeLongExample) UnmarshalJSON(data []byte) error {
 				return false
 			}
 			err = o.Value.UnmarshalJSON([]byte(value.Raw))
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
@@ -1221,11 +1852,14 @@ func (o *SafeLongExample) UnmarshalJSON(data []byte) error {
 	if len(missingFields) > 0 {
 		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
 	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
 	return nil
 }
 
 func (o SafeLongExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -1237,7 +1871,7 @@ func (o *SafeLongExample) UnmarshalYAML(unmarshal func(interface{}) error) error
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type SetDoubleExample struct {
@@ -1256,11 +1890,36 @@ func (o *SetDoubleExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *SetDoubleExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *SetDoubleExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *SetDoubleExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *SetDoubleExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	o.Value = make([]float64, 0)
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -1278,18 +1937,45 @@ func (o *SetDoubleExample) UnmarshalJSON(data []byte) error {
 					return false
 				}
 				var listElement float64
+				switch value.Type {
+				case gjson.Number:
+					listElement = value.Num
+				case gjson.String:
+					switch value.Str {
+					case "NaN":
+						listElement = math.NaN()
+					case "Infinity":
+						listElement = math.Inf(1)
+					case "-Infinity":
+						listElement = math.Inf(-1)
+					default:
+						err = errors.NewInvalidArgument()
+					}
+				default:
+					err = errors.NewInvalidArgument()
+				}
 				listElement = value.Num
 				o.Value = append(o.Value, listElement)
 				return err == nil
 			})
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
+	return nil
 }
 
 func (o SetDoubleExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -1301,7 +1987,7 @@ func (o *SetDoubleExample) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type SetStringExample struct {
@@ -1320,11 +2006,36 @@ func (o *SetStringExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *SetStringExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *SetStringExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *SetStringExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *SetStringExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	o.Value = make([]string, 0)
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -1346,14 +2057,24 @@ func (o *SetStringExample) UnmarshalJSON(data []byte) error {
 				o.Value = append(o.Value, listElement)
 				return err == nil
 			})
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
+	return nil
 }
 
 func (o SetStringExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -1365,7 +2086,7 @@ func (o *SetStringExample) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type SnakeCaseObjectExample struct {
@@ -1381,11 +2102,36 @@ func (o *SnakeCaseObjectExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *SnakeCaseObjectExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *SnakeCaseObjectExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *SnakeCaseObjectExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *SnakeCaseObjectExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	var seenSnakeCasedField bool
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -1399,6 +2145,10 @@ func (o *SnakeCaseObjectExample) UnmarshalJSON(data []byte) error {
 				return false
 			}
 			o.SnakeCasedField = int(value.Int())
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
@@ -1412,11 +2162,14 @@ func (o *SnakeCaseObjectExample) UnmarshalJSON(data []byte) error {
 	if len(missingFields) > 0 {
 		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
 	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
 	return nil
 }
 
 func (o SnakeCaseObjectExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -1428,7 +2181,7 @@ func (o *SnakeCaseObjectExample) UnmarshalYAML(unmarshal func(interface{}) error
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type StringExample struct {
@@ -1444,11 +2197,36 @@ func (o *StringExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *StringExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *StringExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *StringExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *StringExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	var seenValue bool
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -1462,6 +2240,10 @@ func (o *StringExample) UnmarshalJSON(data []byte) error {
 				return false
 			}
 			o.Value = value.Str
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
@@ -1475,11 +2257,14 @@ func (o *StringExample) UnmarshalJSON(data []byte) error {
 	if len(missingFields) > 0 {
 		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
 	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
 	return nil
 }
 
 func (o StringExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -1491,7 +2276,7 @@ func (o *StringExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }
 
 type UuidExample struct {
@@ -1507,11 +2292,36 @@ func (o *UuidExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *UuidExample) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *UuidExample) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *UuidExample) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *UuidExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	var seenValue bool
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -1525,6 +2335,10 @@ func (o *UuidExample) UnmarshalJSON(data []byte) error {
 				return false
 			}
 			err = o.Value.UnmarshalText([]byte(value.Str))
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
@@ -1538,11 +2352,14 @@ func (o *UuidExample) UnmarshalJSON(data []byte) error {
 	if len(missingFields) > 0 {
 		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
 	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
 	return nil
 }
 
 func (o UuidExample) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -1554,5 +2371,5 @@ func (o *UuidExample) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }

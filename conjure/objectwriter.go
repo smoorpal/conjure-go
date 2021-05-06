@@ -75,7 +75,7 @@ func astForObject(objectDefinition spec.ObjectDefinition, info types.PkgInfo) ([
 		if err != nil {
 			return nil, err
 		}
-		decls = append(decls, jsonUnmarshalDecl)
+		decls = append(decls, jsonUnmarshalDecl...)
 
 		decls = append(decls, newMarshalYAMLMethod(objReceiverName, objectDefinition.TypeName.Name, info))
 		decls = append(decls, newUnmarshalYAMLMethod(objReceiverName, objectDefinition.TypeName.Name, info))
@@ -87,8 +87,6 @@ func astForObject(objectDefinition spec.ObjectDefinition, info types.PkgInfo) ([
 const (
 	objReceiverName = "o"
 )
-
-type serdeFunc func(objectDefinition spec.ObjectDefinition, info types.PkgInfo) (astgen.ASTDecl, error)
 
 func astForStructJSONMarshal(objectDefinition spec.ObjectDefinition, info types.PkgInfo) (astgen.ASTDecl, error) {
 	var body []astgen.ASTStmt
@@ -124,7 +122,7 @@ func astForStructJSONMarshal(objectDefinition spec.ObjectDefinition, info types.
 	return newMarshalJSONMethod(objReceiverName, objectDefinition.TypeName.Name, body...), nil
 }
 
-func astForStructJSONUnmarshal(objectDefinition spec.ObjectDefinition, info types.PkgInfo) (astgen.ASTDecl, error) {
+func astForStructJSONUnmarshal(objectDefinition spec.ObjectDefinition, info types.PkgInfo) ([]astgen.ASTDecl, error) {
 	//var body []astgen.ASTStmt
 	//aliasTypeName := objectDefinition.TypeName.Name + "Alias"
 	//body = append(body, statement.NewDecl(
@@ -167,11 +165,22 @@ func astForStructJSONUnmarshal(objectDefinition spec.ObjectDefinition, info type
 	//))
 	//
 	//body = append(body, statement.NewReturn(expression.Nil))
-	body, err := visitors.VisitStructFieldsUnmarshalJSONMethodBody(objReceiverName, objectDefinition.Fields, info)
-	if err != nil {
-		return nil, err
+
+	//body, err := visitors.VisitStructFieldsUnmarshalJSONMethodBody(objReceiverName, objectDefinition.Fields, info)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//return newUnmarshalJSONMethod(objReceiverName, objectDefinition.TypeName.Name, body...), nil
+
+	var fields []visitors.JSONFieldDefinition
+	for _, field := range objectDefinition.Fields {
+		fields = append(fields, visitors.JSONFieldDefinition{
+			FieldSelector: transforms.ExportedFieldName(string(field.FieldName)),
+			JSONKey:       string(field.FieldName),
+			Type:          field.Type,
+		})
 	}
-	return newUnmarshalJSONMethod(objReceiverName, objectDefinition.TypeName.Name, body...), nil
+	return visitors.StructFieldsUnmarshalMethods(objReceiverName, objectDefinition.TypeName.Name, fields, info)
 }
 
 func structMarshalInitDecls(objectDefinition spec.ObjectDefinition, variableVal string, info types.PkgInfo) ([]astgen.ASTStmt, error) {

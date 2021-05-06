@@ -3,6 +3,8 @@
 package api
 
 import (
+	"encoding/json"
+
 	"github.com/palantir/conjure-go-runtime/v2/conjure-go-contract/errors"
 	"github.com/palantir/pkg/safejson"
 	"github.com/palantir/pkg/safeyaml"
@@ -23,11 +25,36 @@ func (o *Basic) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
-	value := gjson.ParseBytes(data)
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (o *Basic) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (o *Basic) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (o *Basic) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (o *Basic) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
 	}
 	var seenData bool
+	var unrecognizedFields []string
 	var err error
 	value.ForEach(func(key, value gjson.Result) bool {
 		if value.Type == gjson.Null {
@@ -41,6 +68,10 @@ func (o *Basic) UnmarshalJSON(data []byte) error {
 				return false
 			}
 			o.Data = value.Str
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
 		}
 		return err == nil
 	})
@@ -54,11 +85,14 @@ func (o *Basic) UnmarshalJSON(data []byte) error {
 	if len(missingFields) > 0 {
 		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
 	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
 	return nil
 }
 
 func (o Basic) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(o)
+	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		return nil, err
 	}
@@ -70,5 +104,5 @@ func (o *Basic) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&o)
+	return o.UnmarshalJSON(jsonBytes)
 }

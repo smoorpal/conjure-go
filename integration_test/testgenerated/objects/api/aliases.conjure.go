@@ -3,6 +3,8 @@
 package api
 
 import (
+	"encoding/json"
+
 	"github.com/palantir/pkg/rid"
 	"github.com/palantir/pkg/safejson"
 	"github.com/palantir/pkg/safeyaml"
@@ -29,7 +31,7 @@ func (a *OptionalUuidAlias) UnmarshalText(data []byte) error {
 }
 
 func (a OptionalUuidAlias) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(a)
+	jsonBytes, err := json.Marshal(a)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +43,7 @@ func (a *OptionalUuidAlias) UnmarshalYAML(unmarshal func(interface{}) error) err
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&a)
+	return a.UnmarshalJSON(jsonBytes)
 }
 
 type RidAlias rid.ResourceIdentifier
@@ -98,7 +100,7 @@ func (a *UuidAlias2) UnmarshalJSON(data []byte) error {
 }
 
 func (a UuidAlias2) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(a)
+	jsonBytes, err := json.Marshal(a)
 	if err != nil {
 		return nil, err
 	}
@@ -110,5 +112,5 @@ func (a *UuidAlias2) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&a)
+	return a.UnmarshalJSON(jsonBytes)
 }

@@ -25,25 +25,144 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/palantir/conjure-go/v6/conjure-api/conjure/spec"
-	"github.com/palantir/conjure-go/v6/conjure/transforms"
 	"github.com/palantir/conjure-go/v6/conjure/types"
 )
 
-func VisitStructFieldsUnmarshalJSONMethodBody(receiverName string, fields []spec.FieldDefinition, info types.PkgInfo) ([]astgen.ASTStmt, error) {
-	info.AddImports("unsafe", "github.com/tidwall/gjson", "github.com/palantir/conjure-go-runtime/v2/conjure-go-contract/errors")
-	var body []astgen.ASTStmt
+type JSONFieldDefinition struct {
+	FieldSelector string
+	JSONKey       string
+	Type          spec.Type
+}
 
-	// if !gjson.ValidBytes(data) { return errors.NewInvalidArgument() }
-	body = append(body, &statement.If{
-		Cond: expression.NewUnary(token.NOT, expression.NewCallFunction("gjson", "ValidBytes", expression.VariableVal("data"))),
-		Body: []astgen.ASTStmt{
-			statement.NewReturn(expression.NewCallFunction("errors", "NewInvalidArgument")), //TODO: include more helpful info (type name, invalid json) in error
+func StructFieldsUnmarshalMethods(receiverName string, receiverType string, fields []JSONFieldDefinition, info types.PkgInfo) ([]astgen.ASTDecl, error) {
+	info.AddImports("unsafe", "github.com/tidwall/gjson", "github.com/palantir/conjure-go-runtime/v2/conjure-go-contract/errors")
+	var methods []astgen.ASTDecl
+
+	methods = append(methods,
+		&decl.Method{
+			ReceiverName: receiverName,
+			ReceiverType: expression.Type(receiverType).Pointer(),
+			Function: decl.Function{
+				Name: "UnmarshalJSON",
+				FuncType: expression.FuncType{
+					Params:      expression.FuncParams{expression.NewFuncParam("data", expression.ByteSliceType)},
+					ReturnTypes: []expression.Type{expression.ErrorType},
+				},
+				Body: []astgen.ASTStmt{
+					// if !gjson.ValidBytes(data) { return errors.NewInvalidArgument() }
+					&statement.If{
+						Cond: expression.NewUnary(token.NOT, expression.NewCallFunction("gjson", "ValidBytes", expression.VariableVal("data"))),
+						Body: []astgen.ASTStmt{
+							statement.NewReturn(expression.NewCallFunction("errors", "NewInvalidArgument")),
+						},
+					},
+					// return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+					statement.NewReturn(expression.NewCallFunction(receiverName, "unmarshalGJSON",
+						expression.NewCallFunction("gjson", "ParseBytes", expression.VariableVal("data")),
+						expression.VariableVal("false"))),
+				},
+			},
+		},
+		&decl.Method{
+			ReceiverName: receiverName,
+			ReceiverType: expression.Type(receiverType).Pointer(),
+			Function: decl.Function{
+				Name: "UnmarshalJSONString",
+				FuncType: expression.FuncType{
+					Params:      expression.FuncParams{expression.NewFuncParam("data", expression.StringType)},
+					ReturnTypes: []expression.Type{expression.ErrorType},
+				},
+				Body: []astgen.ASTStmt{
+					// if !gjson.Valid(data) { return errors.NewInvalidArgument() }
+					&statement.If{
+						Cond: expression.NewUnary(token.NOT, expression.NewCallFunction("gjson", "Valid", expression.VariableVal("data"))),
+						Body: []astgen.ASTStmt{
+							statement.NewReturn(expression.NewCallFunction("errors", "NewInvalidArgument")),
+						},
+					},
+					// return o.unmarshalGJSON(gjson.Parse(data), false)
+					statement.NewReturn(expression.NewCallFunction(receiverName, "unmarshalGJSON",
+						expression.NewCallFunction("gjson", "Parse", expression.VariableVal("data")),
+						expression.VariableVal("false"))),
+				},
+			},
+		},
+		&decl.Method{
+			ReceiverName: receiverName,
+			ReceiverType: expression.Type(receiverType).Pointer(),
+			Function: decl.Function{
+				Name: "UnmarshalStrictJSON",
+				FuncType: expression.FuncType{
+					Params:      expression.FuncParams{expression.NewFuncParam("data", expression.ByteSliceType)},
+					ReturnTypes: []expression.Type{expression.ErrorType},
+				},
+				Body: []astgen.ASTStmt{
+					// if !gjson.ValidBytes(data) { return errors.NewInvalidArgument() }
+					&statement.If{
+						Cond: expression.NewUnary(token.NOT, expression.NewCallFunction("gjson", "ValidBytes", expression.VariableVal("data"))),
+						Body: []astgen.ASTStmt{
+							statement.NewReturn(expression.NewCallFunction("errors", "NewInvalidArgument")),
+						},
+					},
+					// return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+					statement.NewReturn(expression.NewCallFunction(receiverName, "unmarshalGJSON",
+						expression.NewCallFunction("gjson", "ParseBytes", expression.VariableVal("data")),
+						expression.VariableVal("true"))),
+				},
+			},
+		},
+		&decl.Method{
+			ReceiverName: receiverName,
+			ReceiverType: expression.Type(receiverType).Pointer(),
+			Function: decl.Function{
+				Name: "UnmarshalStrictJSONString",
+				FuncType: expression.FuncType{
+					Params:      expression.FuncParams{expression.NewFuncParam("data", expression.StringType)},
+					ReturnTypes: []expression.Type{expression.ErrorType},
+				},
+				Body: []astgen.ASTStmt{
+					// if !gjson.Valid(data) { return errors.NewInvalidArgument() }
+					&statement.If{
+						Cond: expression.NewUnary(token.NOT, expression.NewCallFunction("gjson", "Valid", expression.VariableVal("data"))),
+						Body: []astgen.ASTStmt{
+							statement.NewReturn(expression.NewCallFunction("errors", "NewInvalidArgument")),
+						},
+					},
+					// return o.unmarshalGJSON(gjson.Parse(data), false)
+					statement.NewReturn(expression.NewCallFunction(receiverName, "unmarshalGJSON",
+						expression.NewCallFunction("gjson", "Parse", expression.VariableVal("data")),
+						expression.VariableVal("true"))),
+				},
+			},
+		},
+	)
+
+	unmarshalGJSONBody, err := visitStructFieldsUnmarshalGJSONMethodBody(receiverName, fields, info)
+	if err != nil {
+		return nil, err
+	}
+	methods = append(methods, &decl.Method{
+		ReceiverName: receiverName,
+		ReceiverType: expression.Type(receiverType).Pointer(),
+		Function: decl.Function{
+			Name: "unmarshalGJSON",
+			FuncType: expression.FuncType{
+				Params: expression.FuncParams{
+					expression.NewFuncParam("value", expression.Type("gjson.Result")),
+					expression.NewFuncParam("strict", expression.BoolType),
+				},
+				ReturnTypes: []expression.Type{expression.ErrorType},
+			},
+			Body: unmarshalGJSONBody,
 		},
 	})
 
-	// value := gjson.ParseBytes(data)
-	body = append(body, statement.NewAssignment(expression.VariableVal("value"), token.DEFINE,
-		expression.NewCallFunction("gjson", "ParseBytes", expression.VariableVal("data"))))
+	return methods, nil
+}
+
+func visitStructFieldsUnmarshalGJSONMethodBody(receiverName string, fields []JSONFieldDefinition, info types.PkgInfo) ([]astgen.ASTStmt, error) {
+	info.SetImports("wparams", "github.com/palantir/witchcraft-go-params")
+	var body []astgen.ASTStmt
 
 	// if !value.IsObject() { return errors.NewInvalidArgument() }
 	body = append(body, &statement.If{
@@ -56,21 +175,34 @@ func VisitStructFieldsUnmarshalJSONMethodBody(receiverName string, fields []spec
 	var fieldCases []statement.CaseClause
 	var fieldValidates []astgen.ASTStmt
 	for _, field := range fields {
-		selector := expression.NewSelector(expression.VariableVal(receiverName), transforms.ExportedFieldName(string(field.FieldName)))
+		selector := expression.NewSelector(expression.VariableVal(receiverName), field.FieldSelector)
 		stmts, err := visitStructFieldsUnmarshalJSONMethodStmts(selector, field, info)
 		if err != nil {
 			return nil, err
 		}
 		fieldInits = append(fieldInits, stmts.Init...)
 		fieldCases = append(fieldCases, statement.CaseClause{
-			Exprs: []astgen.ASTExpr{expression.StringVal(field.FieldName)},
+			Exprs: []astgen.ASTExpr{expression.StringVal(field.JSONKey)},
 			Body:  stmts.UnmarshalGJSON,
 		})
 		fieldValidates = append(fieldValidates, stmts.ValidateReqdField...)
 	}
+	unrecognizedFieldsVar := expression.VariableVal("unrecognizedFields")
+	fieldCases = append(fieldCases, statement.CaseClause{
+		Exprs: nil, // default case
+		Body: []astgen.ASTStmt{&statement.If{
+			Cond: expression.VariableVal("strict"),
+			Body: []astgen.ASTStmt{
+				statement.NewAssignment(unrecognizedFieldsVar, token.ASSIGN,
+					expression.NewCallExpression(expression.AppendBuiltIn, unrecognizedFieldsVar, expression.VariableVal("key.String()"))),
+			},
+		}},
+	})
 
 	body = append(body, fieldInits...)
 
+	// var unrecognizedFields []string
+	body = append(body, statement.NewDecl(decl.NewVar("unrecognizedFields", "[]string")))
 	// var err error
 	body = append(body, statement.NewDecl(decl.NewVar("err", expression.ErrorType)))
 
@@ -101,17 +233,15 @@ func VisitStructFieldsUnmarshalJSONMethodBody(receiverName string, fields []spec
 			statement.NewReturn(expression.NewBinary(expression.VariableVal("err"), token.EQL, expression.Nil)),
 		),
 	)))
-
+	// if err != nil { return err }
+	body = append(body, &statement.If{
+		Cond: expression.NewBinary(expression.VariableVal("err"), token.NEQ, expression.Nil),
+		Body: []astgen.ASTStmt{statement.NewReturn(expression.VariableVal("err"))},
+	})
 	if len(fieldValidates) > 0 {
-		// if err != nil { return err }
-		body = append(body, &statement.If{
-			Cond: expression.NewBinary(expression.VariableVal("err"), token.NEQ, expression.Nil),
-			Body: []astgen.ASTStmt{statement.NewReturn(expression.VariableVal("err"))},
-		})
 		missingFieldsVar := expression.VariableVal("missingFields")
 		body = append(body, statement.NewDecl(decl.NewVar("missingFields", "[]string")))
 		body = append(body, fieldValidates...)
-		info.AddImports("github.com/palantir/witchcraft-go-params")
 		body = append(body, &statement.If{
 			Cond: expression.NewBinary(
 				expression.NewCallExpression(expression.LenBuiltIn, missingFieldsVar),
@@ -124,14 +254,24 @@ func VisitStructFieldsUnmarshalJSONMethodBody(receiverName string, fields []spec
 				),
 			)},
 		})
-		body = append(body, statement.NewReturn(expression.Nil))
-	} else {
-		// return err
-		body = append(body, statement.NewReturn(expression.VariableVal("err")))
 	}
-
-	// TODO: Strict mode rejects unknown keys
-	// TODO: Additional Methods: unmarshalGJSON, UnmarshalJSONString
+	body = append(body, &statement.If{
+		Cond: expression.NewBinary(
+			expression.VariableVal("strict"),
+			token.LAND,
+			expression.NewBinary(
+				expression.NewCallExpression(expression.LenBuiltIn, unrecognizedFieldsVar),
+				token.GTR,
+				expression.IntVal(0),
+			),
+		),
+		Body: []astgen.ASTStmt{statement.NewReturn(
+			expression.NewCallFunction("errors", "NewInvalidArgument",
+				expression.NewCallFunction("wparams", "NewSafeParam", expression.StringVal("unrecognizedFields"), unrecognizedFieldsVar),
+			),
+		)},
+	})
+	body = append(body, statement.NewReturn(expression.Nil))
 
 	return body, nil
 }
@@ -142,7 +282,7 @@ type structFieldsUnmarshalJSONMethodStmts struct {
 	ValidateReqdField []astgen.ASTStmt
 }
 
-func visitStructFieldsUnmarshalJSONMethodStmts(selector astgen.ASTExpr, field spec.FieldDefinition, info types.PkgInfo) (structFieldsUnmarshalJSONMethodStmts, error) {
+func visitStructFieldsUnmarshalJSONMethodStmts(selector astgen.ASTExpr, field JSONFieldDefinition, info types.PkgInfo) (structFieldsUnmarshalJSONMethodStmts, error) {
 	result := structFieldsUnmarshalJSONMethodStmts{}
 
 	typeProvider, err := NewConjureTypeProvider(field.Type)
@@ -161,7 +301,7 @@ func visitStructFieldsUnmarshalJSONMethodStmts(selector astgen.ASTExpr, field sp
 	}
 	// If a field is not a collection or optional, it is required.
 	requiredField := collectionExpression == nil && !typeProvider.IsSpecificType(IsOptional) // TODO(bmoylan) This does not handle aliases of optionals
-	seenVar := "seen" + transforms.ExportedFieldName(string(field.FieldName))
+	seenVar := "seen" + field.FieldSelector
 
 	if requiredField {
 		// Declare a 'var seenFieldName bool' which we will set to true inside the case statement.
@@ -193,7 +333,7 @@ func visitStructFieldsUnmarshalJSONMethodStmts(selector astgen.ASTExpr, field sp
 			Cond: expression.NewUnary(token.NOT, expression.VariableVal(seenVar)),
 			Body: []astgen.ASTStmt{
 				statement.NewAssignment(expression.VariableVal("missingFields"), token.ASSIGN,
-					expression.NewCallExpression(expression.AppendBuiltIn, expression.VariableVal("missingFields"), expression.StringVal(field.FieldName))),
+					expression.NewCallExpression(expression.AppendBuiltIn, expression.VariableVal("missingFields"), expression.StringVal(field.JSONKey))),
 			},
 		})
 	}
@@ -239,6 +379,52 @@ func (v *gjsonUnmarshalValueVisitor) VisitPrimitive(t spec.PrimitiveType) error 
 			RHS: expression.NewCallExpression(expression.IntType, expression.NewCallFunction(v.valueVar, "Int")),
 		})
 	case spec.PrimitiveType_DOUBLE:
+		v.info.AddImports("math")
+		assignDouble := func(rhs astgen.ASTExpr) astgen.ASTStmt {
+			return &statement.Assignment{
+				LHS: []astgen.ASTExpr{v.selector},
+				Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
+				RHS: rhs,
+			}
+		}
+		v.stmts = append(v.stmts, &statement.Switch{
+			Expression: expression.NewSelector(expression.VariableVal(v.valueVar), "Type"),
+			Cases: []statement.CaseClause{
+				{
+					Exprs: []astgen.ASTExpr{expression.NewSelector(expression.VariableVal("gjson"), "Number")},
+					Body:  []astgen.ASTStmt{assignDouble(expression.NewSelector(expression.VariableVal(v.valueVar), "Num"))},
+				},
+				{
+					Exprs: []astgen.ASTExpr{expression.NewSelector(expression.VariableVal("gjson"), "String")},
+					Body: []astgen.ASTStmt{&statement.Switch{
+						Expression: expression.NewSelector(expression.VariableVal(v.valueVar), "Str"),
+						Cases: []statement.CaseClause{
+							{
+								Exprs: []astgen.ASTExpr{expression.StringVal("NaN")},
+								Body:  []astgen.ASTStmt{assignDouble(expression.NewCallFunction("math", "NaN"))},
+							},
+							{
+								Exprs: []astgen.ASTExpr{expression.StringVal("Infinity")},
+								Body:  []astgen.ASTStmt{assignDouble(expression.NewCallFunction("math", "Inf", expression.IntVal(1)))},
+							},
+							{
+								Exprs: []astgen.ASTExpr{expression.StringVal("-Infinity")},
+								Body:  []astgen.ASTStmt{assignDouble(expression.NewCallFunction("math", "Inf", expression.IntVal(-1)))},
+							},
+							{
+								Exprs: nil, // default case
+								Body:  []astgen.ASTStmt{errEqualNewInvalidArgument()},
+							},
+						},
+					}},
+				},
+				{
+					Exprs: nil, // default case
+					Body:  []astgen.ASTStmt{errEqualNewInvalidArgument()},
+				},
+			},
+		})
+
 		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "Number"))
 		v.stmts = append(v.stmts, &statement.Assignment{
 			LHS: []astgen.ASTExpr{v.selector},
@@ -310,7 +496,7 @@ func (v *gjsonUnmarshalValueVisitor) VisitOptional(t spec.OptionalType) error {
 		info:      v.info,
 		selector:  valVar,
 		valueVar:  v.valueVar,
-		nestDepth: v.nestDepth,
+		nestDepth: v.nestDepth + 1,
 	}
 	if err := t.ItemType.Accept(innerVisitor); err != nil {
 		return err
@@ -559,8 +745,10 @@ func (v *gjsonUnmarshalValueReferenceDefVisitor) VisitEnum(_ spec.EnumDefinition
 	return nil
 }
 
-func (v *gjsonUnmarshalValueReferenceDefVisitor) VisitObject(_ spec.ObjectDefinition) error {
-	v.stmts = append(v.stmts, unmarshalJSONValue(v.selector, v.valueVar))
+func (v *gjsonUnmarshalValueReferenceDefVisitor) VisitObject(def spec.ObjectDefinition) error {
+	if len(def.Fields) > 0 {
+		v.stmts = append(v.stmts, unmarshalJSONValue(v.selector, v.valueVar))
+	}
 	return nil
 }
 

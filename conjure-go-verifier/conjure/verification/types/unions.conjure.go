@@ -4,10 +4,14 @@ package types
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
+	"github.com/palantir/conjure-go-runtime/v2/conjure-go-contract/errors"
 	"github.com/palantir/pkg/safejson"
 	"github.com/palantir/pkg/safeyaml"
+	wparams "github.com/palantir/witchcraft-go-params"
+	"github.com/tidwall/gjson"
 )
 
 // A type which can either be a StringExample, a set of strings, or an integer.
@@ -20,21 +24,6 @@ type Union struct {
 	if_                  *int
 	new                  *int
 	interface_           *int
-}
-
-type unionDeserializer struct {
-	Type                 string         `json:"type"`
-	StringExample        *StringExample `json:"stringExample"`
-	Set                  *[]string      `json:"set"`
-	ThisFieldIsAnInteger *int           `json:"thisFieldIsAnInteger"`
-	AlsoAnInteger        *int           `json:"alsoAnInteger"`
-	If                   *int           `json:"if"`
-	New                  *int           `json:"new"`
-	Interface            *int           `json:"interface"`
-}
-
-func (u *unionDeserializer) toStruct() Union {
-	return Union{typ: u.Type, stringExample: u.StringExample, set: u.Set, thisFieldIsAnInteger: u.ThisFieldIsAnInteger, alsoAnInteger: u.AlsoAnInteger, if_: u.If, new: u.New, interface_: u.Interface}
 }
 
 func (u *Union) toSerializer() (interface{}, error) {
@@ -87,17 +76,8 @@ func (u Union) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(ser)
 }
 
-func (u *Union) UnmarshalJSON(data []byte) error {
-	var deser unionDeserializer
-	if err := safejson.Unmarshal(data, &deser); err != nil {
-		return err
-	}
-	*u = deser.toStruct()
-	return nil
-}
-
 func (u Union) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := safejson.Marshal(u)
+	jsonBytes, err := json.Marshal(u)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +89,152 @@ func (u *Union) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	return safejson.Unmarshal(jsonBytes, *&u)
+	return u.UnmarshalJSON(jsonBytes)
+}
+
+func (u *Union) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return u.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (u *Union) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return u.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+func (u *Union) UnmarshalStrictJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return u.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+func (u *Union) UnmarshalStrictJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return u.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+func (u *Union) unmarshalGJSON(value gjson.Result, strict bool) error {
+	if !value.IsObject() {
+		return errors.NewInvalidArgument()
+	}
+	var seentyp bool
+	var unrecognizedFields []string
+	var err error
+	value.ForEach(func(key, value gjson.Result) bool {
+		if value.Type == gjson.Null {
+			return true
+		}
+		switch key.Str {
+		case "type":
+			seentyp = true
+			if value.Type != gjson.String {
+				err = errors.NewInvalidArgument()
+				return false
+			}
+			u.typ = value.Str
+		case "stringExample":
+			if value.Type != gjson.Null {
+				var optionalValue StringExample
+				err = optionalValue.UnmarshalJSON([]byte(value.Raw))
+				u.stringExample = &optionalValue
+			}
+		case "set":
+			if value.Type != gjson.Null {
+				if !value.IsArray() {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var optionalValue []string
+				value.ForEach(func(_, value gjson.Result) bool {
+					if value.Type != gjson.String {
+						err = errors.NewInvalidArgument()
+						return false
+					}
+					var listElement1 string
+					listElement1 = value.Str
+					optionalValue = append(optionalValue, listElement1)
+					return err == nil
+				})
+				u.set = &optionalValue
+			}
+		case "thisFieldIsAnInteger":
+			if value.Type != gjson.Null {
+				if value.Type != gjson.Number {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var optionalValue int
+				optionalValue = int(value.Int())
+				u.thisFieldIsAnInteger = &optionalValue
+			}
+		case "alsoAnInteger":
+			if value.Type != gjson.Null {
+				if value.Type != gjson.Number {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var optionalValue int
+				optionalValue = int(value.Int())
+				u.alsoAnInteger = &optionalValue
+			}
+		case "if":
+			if value.Type != gjson.Null {
+				if value.Type != gjson.Number {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var optionalValue int
+				optionalValue = int(value.Int())
+				u.if_ = &optionalValue
+			}
+		case "new":
+			if value.Type != gjson.Null {
+				if value.Type != gjson.Number {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var optionalValue int
+				optionalValue = int(value.Int())
+				u.new = &optionalValue
+			}
+		case "interface":
+			if value.Type != gjson.Null {
+				if value.Type != gjson.Number {
+					err = errors.NewInvalidArgument()
+					return false
+				}
+				var optionalValue int
+				optionalValue = int(value.Int())
+				u.interface_ = &optionalValue
+			}
+		default:
+			if strict {
+				unrecognizedFields = append(unrecognizedFields, key.String())
+			}
+		}
+		return err == nil
+	})
+	if err != nil {
+		return err
+	}
+	var missingFields []string
+	if !seentyp {
+		missingFields = append(missingFields, "type")
+	}
+	if len(missingFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+	}
+	if strict && len(unrecognizedFields) > 0 {
+		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+	}
+	return nil
 }
 
 func (u *Union) Accept(v UnionVisitor) error {
