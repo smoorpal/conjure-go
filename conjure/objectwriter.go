@@ -28,6 +28,7 @@ import (
 	"github.com/palantir/conjure-go/v6/conjure/transforms"
 	"github.com/palantir/conjure-go/v6/conjure/types"
 	"github.com/palantir/conjure-go/v6/conjure/visitors"
+	"github.com/palantir/conjure-go/v6/conjure/visitors/jsonencoding"
 )
 
 func astForObject(objectDefinition spec.ObjectDefinition, info types.PkgInfo) ([]astgen.ASTDecl, error) {
@@ -172,15 +173,15 @@ func astForStructJSONUnmarshal(objectDefinition spec.ObjectDefinition, info type
 	//}
 	//return newUnmarshalJSONMethod(objReceiverName, objectDefinition.TypeName.Name, body...), nil
 
-	var fields []visitors.JSONFieldDefinition
+	var fields []jsonencoding.JSONFieldDefinition
 	for _, field := range objectDefinition.Fields {
-		fields = append(fields, visitors.JSONFieldDefinition{
+		fields = append(fields, jsonencoding.JSONFieldDefinition{
 			FieldSelector: transforms.ExportedFieldName(string(field.FieldName)),
 			JSONKey:       string(field.FieldName),
 			Type:          field.Type,
 		})
 	}
-	return visitors.StructFieldsUnmarshalMethods(objReceiverName, objectDefinition.TypeName.Name, fields, info)
+	return jsonencoding.StructFieldsUnmarshalMethods(objReceiverName, objectDefinition.TypeName.Name, fields, info)
 }
 
 func structMarshalInitDecls(objectDefinition spec.ObjectDefinition, variableVal string, info types.PkgInfo) ([]astgen.ASTStmt, error) {

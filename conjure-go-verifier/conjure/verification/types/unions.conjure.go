@@ -92,6 +92,8 @@ func (u *Union) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return u.UnmarshalJSON(jsonBytes)
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (u *Union) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -99,6 +101,7 @@ func (u *Union) UnmarshalJSON(data []byte) error {
 	return u.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (u *Union) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -106,14 +109,17 @@ func (u *Union) UnmarshalJSONString(data string) error {
 	return u.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (u *Union) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (u *Union) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return u.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (u *Union) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (u *Union) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -142,7 +148,11 @@ func (u *Union) unmarshalGJSON(value gjson.Result, strict bool) error {
 		case "stringExample":
 			if value.Type != gjson.Null {
 				var optionalValue StringExample
-				err = optionalValue.UnmarshalJSON([]byte(value.Raw))
+				if strict {
+					err = optionalValue.UnmarshalJSONStringStrict(value.Raw)
+				} else {
+					err = optionalValue.UnmarshalJSONString(value.Raw)
+				}
 				u.stringExample = &optionalValue
 			}
 		case "set":

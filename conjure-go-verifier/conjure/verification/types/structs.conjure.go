@@ -28,6 +28,8 @@ func (o AnyExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(AnyExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *AnyExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -35,6 +37,7 @@ func (o *AnyExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *AnyExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -42,14 +45,17 @@ func (o *AnyExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *AnyExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *AnyExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *AnyExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *AnyExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -123,6 +129,8 @@ func (o BearerTokenExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(BearerTokenExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *BearerTokenExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -130,6 +138,7 @@ func (o *BearerTokenExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *BearerTokenExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -137,14 +146,17 @@ func (o *BearerTokenExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *BearerTokenExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *BearerTokenExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *BearerTokenExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *BearerTokenExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -169,7 +181,7 @@ func (o *BearerTokenExample) unmarshalGJSON(value gjson.Result, strict bool) err
 				err = errors.NewInvalidArgument()
 				return false
 			}
-			err = o.Value.UnmarshalText([]byte(value.Str))
+			o.Value = bearertoken.Token(value.Str)
 		default:
 			if strict {
 				unrecognizedFields = append(unrecognizedFields, key.String())
@@ -221,6 +233,8 @@ func (o BinaryExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(BinaryExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *BinaryExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -228,6 +242,7 @@ func (o *BinaryExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *BinaryExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -235,14 +250,17 @@ func (o *BinaryExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *BinaryExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *BinaryExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *BinaryExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *BinaryExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -308,6 +326,8 @@ func (o BooleanExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(BooleanExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *BooleanExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -315,6 +335,7 @@ func (o *BooleanExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *BooleanExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -322,14 +343,17 @@ func (o *BooleanExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *BooleanExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *BooleanExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *BooleanExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *BooleanExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -403,6 +427,8 @@ func (o DateTimeExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(DateTimeExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *DateTimeExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -410,6 +436,7 @@ func (o *DateTimeExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *DateTimeExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -417,14 +444,17 @@ func (o *DateTimeExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *DateTimeExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *DateTimeExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *DateTimeExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *DateTimeExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -449,7 +479,7 @@ func (o *DateTimeExample) unmarshalGJSON(value gjson.Result, strict bool) error 
 				err = errors.NewInvalidArgument()
 				return false
 			}
-			err = o.Value.UnmarshalText([]byte(value.Str))
+			o.Value, err = datetime.ParseDateTime(value.Str)
 		default:
 			if strict {
 				unrecognizedFields = append(unrecognizedFields, key.String())
@@ -498,6 +528,8 @@ func (o DoubleExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(DoubleExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *DoubleExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -505,6 +537,7 @@ func (o *DoubleExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *DoubleExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -512,14 +545,17 @@ func (o *DoubleExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *DoubleExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *DoubleExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *DoubleExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *DoubleExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -613,6 +649,8 @@ func (o EnumFieldExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(EnumFieldExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *EnumFieldExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -620,6 +658,7 @@ func (o *EnumFieldExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *EnumFieldExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -627,14 +666,17 @@ func (o *EnumFieldExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *EnumFieldExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *EnumFieldExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *EnumFieldExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *EnumFieldExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -708,6 +750,8 @@ func (o IntegerExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(IntegerExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *IntegerExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -715,6 +759,7 @@ func (o *IntegerExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *IntegerExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -722,14 +767,17 @@ func (o *IntegerExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *IntegerExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *IntegerExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *IntegerExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *IntegerExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -803,6 +851,8 @@ func (o KebabCaseObjectExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(KebabCaseObjectExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *KebabCaseObjectExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -810,6 +860,7 @@ func (o *KebabCaseObjectExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *KebabCaseObjectExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -817,14 +868,17 @@ func (o *KebabCaseObjectExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *KebabCaseObjectExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *KebabCaseObjectExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *KebabCaseObjectExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *KebabCaseObjectExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -901,6 +955,8 @@ func (o ListExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(ListExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *ListExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -908,6 +964,7 @@ func (o *ListExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *ListExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -915,14 +972,17 @@ func (o *ListExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *ListExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *ListExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *ListExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *ListExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -997,6 +1057,8 @@ func (o LongFieldNameOptionalExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(LongFieldNameOptionalExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *LongFieldNameOptionalExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -1004,6 +1066,7 @@ func (o *LongFieldNameOptionalExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *LongFieldNameOptionalExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -1011,14 +1074,17 @@ func (o *LongFieldNameOptionalExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *LongFieldNameOptionalExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *LongFieldNameOptionalExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *LongFieldNameOptionalExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *LongFieldNameOptionalExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -1090,6 +1156,8 @@ func (o MapExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(MapExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *MapExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -1097,6 +1165,7 @@ func (o *MapExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *MapExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -1104,14 +1173,17 @@ func (o *MapExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *MapExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *MapExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *MapExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *MapExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -1211,6 +1283,8 @@ func (o ObjectExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(ObjectExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *ObjectExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -1218,6 +1292,7 @@ func (o *ObjectExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *ObjectExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -1225,14 +1300,17 @@ func (o *ObjectExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *ObjectExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *ObjectExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *ObjectExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *ObjectExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -1423,6 +1501,8 @@ func (o OptionalBooleanExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(OptionalBooleanExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *OptionalBooleanExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -1430,6 +1510,7 @@ func (o *OptionalBooleanExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *OptionalBooleanExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -1437,14 +1518,17 @@ func (o *OptionalBooleanExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *OptionalBooleanExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *OptionalBooleanExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *OptionalBooleanExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *OptionalBooleanExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -1513,6 +1597,8 @@ func (o OptionalExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(OptionalExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *OptionalExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -1520,6 +1606,7 @@ func (o *OptionalExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *OptionalExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -1527,14 +1614,17 @@ func (o *OptionalExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *OptionalExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *OptionalExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *OptionalExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *OptionalExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -1603,6 +1693,8 @@ func (o OptionalIntegerExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(OptionalIntegerExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *OptionalIntegerExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -1610,6 +1702,7 @@ func (o *OptionalIntegerExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *OptionalIntegerExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -1617,14 +1710,17 @@ func (o *OptionalIntegerExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *OptionalIntegerExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *OptionalIntegerExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *OptionalIntegerExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *OptionalIntegerExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -1693,6 +1789,8 @@ func (o RidExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(RidExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *RidExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -1700,6 +1798,7 @@ func (o *RidExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *RidExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -1707,14 +1806,17 @@ func (o *RidExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *RidExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *RidExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *RidExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *RidExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -1739,7 +1841,7 @@ func (o *RidExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 				err = errors.NewInvalidArgument()
 				return false
 			}
-			err = o.Value.UnmarshalText([]byte(value.Str))
+			o.Value, err = rid.ParseRID(value.Str)
 		default:
 			if strict {
 				unrecognizedFields = append(unrecognizedFields, key.String())
@@ -1788,6 +1890,8 @@ func (o SafeLongExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(SafeLongExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *SafeLongExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -1795,6 +1899,7 @@ func (o *SafeLongExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *SafeLongExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -1802,14 +1907,17 @@ func (o *SafeLongExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *SafeLongExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *SafeLongExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *SafeLongExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *SafeLongExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -1834,7 +1942,7 @@ func (o *SafeLongExample) unmarshalGJSON(value gjson.Result, strict bool) error 
 				err = errors.NewInvalidArgument()
 				return false
 			}
-			err = o.Value.UnmarshalJSON([]byte(value.Raw))
+			o.Value, err = safelong.NewSafeLong(value.Int())
 		default:
 			if strict {
 				unrecognizedFields = append(unrecognizedFields, key.String())
@@ -1886,6 +1994,8 @@ func (o SetDoubleExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(SetDoubleExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *SetDoubleExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -1893,6 +2003,7 @@ func (o *SetDoubleExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *SetDoubleExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -1900,14 +2011,17 @@ func (o *SetDoubleExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *SetDoubleExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *SetDoubleExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *SetDoubleExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *SetDoubleExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -2002,6 +2116,8 @@ func (o SetStringExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(SetStringExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *SetStringExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -2009,6 +2125,7 @@ func (o *SetStringExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *SetStringExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -2016,14 +2133,17 @@ func (o *SetStringExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *SetStringExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *SetStringExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *SetStringExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *SetStringExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -2098,6 +2218,8 @@ func (o SnakeCaseObjectExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(SnakeCaseObjectExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *SnakeCaseObjectExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -2105,6 +2227,7 @@ func (o *SnakeCaseObjectExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *SnakeCaseObjectExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -2112,14 +2235,17 @@ func (o *SnakeCaseObjectExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *SnakeCaseObjectExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *SnakeCaseObjectExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *SnakeCaseObjectExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *SnakeCaseObjectExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -2193,6 +2319,8 @@ func (o StringExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(StringExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *StringExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -2200,6 +2328,7 @@ func (o *StringExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *StringExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -2207,14 +2336,17 @@ func (o *StringExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *StringExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *StringExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *StringExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *StringExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -2288,6 +2420,8 @@ func (o UuidExample) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(UuidExampleAlias(o))
 }
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *UuidExample) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
@@ -2295,6 +2429,7 @@ func (o *UuidExample) UnmarshalJSON(data []byte) error {
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *UuidExample) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
@@ -2302,14 +2437,17 @@ func (o *UuidExample) UnmarshalJSONString(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
 
-func (o *UuidExample) UnmarshalStrictJSON(data []byte) error {
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (o *UuidExample) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
 
-func (o *UuidExample) UnmarshalStrictJSONString(data string) error {
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (o *UuidExample) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
 		return errors.NewInvalidArgument()
 	}
@@ -2334,7 +2472,7 @@ func (o *UuidExample) unmarshalGJSON(value gjson.Result, strict bool) error {
 				err = errors.NewInvalidArgument()
 				return false
 			}
-			err = o.Value.UnmarshalText([]byte(value.Str))
+			o.Value, err = uuid.ParseUUID(value.Str)
 		default:
 			if strict {
 				unrecognizedFields = append(unrecognizedFields, key.String())

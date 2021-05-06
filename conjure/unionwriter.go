@@ -28,6 +28,7 @@ import (
 	"github.com/palantir/conjure-go/v6/conjure/transforms"
 	"github.com/palantir/conjure-go/v6/conjure/types"
 	"github.com/palantir/conjure-go/v6/conjure/visitors"
+	"github.com/palantir/conjure-go/v6/conjure/visitors/jsonencoding"
 )
 
 const (
@@ -112,61 +113,6 @@ func unionStructAST(unionTypeName string, unionDefinition spec.UnionDefinition, 
 		transforms.Documentation(unionDefinition.Docs),
 	)
 }
-
-//func unionStructDeserializerAST(unionTypeName string, unionDefinition spec.UnionDefinition, fieldNameToGoType map[string]string) astgen.ASTDecl {
-//	structFields := []*expression.StructField{
-//		{
-//			Name: "Type",
-//			Type: expression.StringType,
-//			Tag:  fmt.Sprintf(`json:%q`, "type"),
-//		},
-//	}
-//	for _, fieldDefinition := range unionDefinition.Union {
-//		fieldName := string(fieldDefinition.FieldName)
-//		structFields = append(structFields, &expression.StructField{
-//			Name: transforms.Export(fieldName),
-//			Type: expression.Type(fieldNameToGoType[fieldName]).Pointer(),
-//			Tag:  fmt.Sprintf(`json:%q`, fieldName),
-//		})
-//	}
-//	return decl.NewStruct(
-//		deserializerStructName(unionTypeName),
-//		structFields,
-//		"",
-//	)
-//}
-//
-//func unionStructDeserializerToStructAST(unionTypeName string, unionDefinition spec.UnionDefinition) astgen.ASTDecl {
-//	keyVals := []astgen.ASTExpr{
-//		expression.NewKeyValue("typ", expression.NewSelector(expression.VariableVal(unionReceiverName), "Type")),
-//	}
-//	for _, fieldDefinition := range unionDefinition.Union {
-//		fieldName := string(fieldDefinition.FieldName)
-//		keyVals = append(keyVals,
-//			expression.NewKeyValue(transforms.PrivateFieldName(fieldName), expression.NewSelector(expression.VariableVal(unionReceiverName), transforms.Export(fieldName))),
-//		)
-//	}
-//	return &decl.Method{
-//		Function: decl.Function{
-//			Name: "toStruct",
-//			FuncType: expression.FuncType{
-//				ReturnTypes: []expression.Type{
-//					expression.Type(transforms.ExportedFieldName(unionTypeName)),
-//				},
-//			},
-//			Body: []astgen.ASTStmt{
-//				statement.NewReturn(
-//					expression.NewCompositeLit(
-//						expression.Type(transforms.Export(unionTypeName)),
-//						keyVals...,
-//					),
-//				),
-//			},
-//		},
-//		ReceiverName: unionReceiverName,
-//		ReceiverType: expression.Type(deserializerStructName(unionTypeName)).Pointer(),
-//	}
-//}
 
 func toSerializerFuncAST(unionTypeName string, unionDefinition spec.UnionDefinition, fieldNameToGoType map[string]string) astgen.ASTDecl {
 	// start with default case
@@ -303,28 +249,20 @@ func unionMarshalJSONAST(unionTypeName string, info types.PkgInfo) astgen.ASTDec
 }
 
 func unionUnmarshalJSONASTs(unionDef spec.UnionDefinition, info types.PkgInfo) ([]astgen.ASTDecl, error) {
-	fields := []visitors.JSONFieldDefinition{{
+	fields := []jsonencoding.JSONFieldDefinition{{
 		FieldSelector: "typ",
 		JSONKey:       "type",
 		Type:          spec.NewTypeFromPrimitive(spec.New_PrimitiveType(spec.PrimitiveType_STRING)),
 	}}
 	for _, field := range unionDef.Union {
-		// Unless the field is already an optional, wrap it so we do not require the key exist in the object.
-		//var jsonType spec.Type
-		//if isOptional, _ := visitors.IsSpecificConjureType(field.Type, visitors.IsOptional); isOptional {
-		//	jsonType = field.Type
-		//} else {
-		//jsonType = spec.NewTypeFromOptional(spec.OptionalType{ItemType: field.Type})
-		//}
-		fields = append(fields, visitors.JSONFieldDefinition{
+		fields = append(fields, jsonencoding.JSONFieldDefinition{
 			FieldSelector: transforms.PrivateFieldName(string(field.FieldName)),
 			JSONKey:       string(field.FieldName),
 			Type:          spec.NewTypeFromOptional(spec.OptionalType{ItemType: field.Type}),
-			//Type:          jsonType,
 		})
 	}
 
-	methods, err := visitors.StructFieldsUnmarshalMethods(unionReceiverName, transforms.Export(unionDef.TypeName.Name), fields, info)
+	methods, err := jsonencoding.StructFieldsUnmarshalMethods(unionReceiverName, transforms.Export(unionDef.TypeName.Name), fields, info)
 	if err != nil {
 		return nil, err
 	}

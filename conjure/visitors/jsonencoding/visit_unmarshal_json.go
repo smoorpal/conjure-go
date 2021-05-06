@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package visitors
+package jsonencoding
 
 import (
 	"fmt"
@@ -26,6 +26,7 @@ import (
 
 	"github.com/palantir/conjure-go/v6/conjure-api/conjure/spec"
 	"github.com/palantir/conjure-go/v6/conjure/types"
+	"github.com/palantir/conjure-go/v6/conjure/visitors"
 )
 
 type JSONFieldDefinition struct {
@@ -43,7 +44,8 @@ func StructFieldsUnmarshalMethods(receiverName string, receiverType string, fiel
 			ReceiverName: receiverName,
 			ReceiverType: expression.Type(receiverType).Pointer(),
 			Function: decl.Function{
-				Name: "UnmarshalJSON",
+				Name:    "UnmarshalJSON",
+				Comment: "UnmarshalJSON deserializes data, ignoring unrecognized keys.\nPrefer UnmarshalJSONString if data is already in string form to avoid an extra copy.",
 				FuncType: expression.FuncType{
 					Params:      expression.FuncParams{expression.NewFuncParam("data", expression.ByteSliceType)},
 					ReturnTypes: []expression.Type{expression.ErrorType},
@@ -67,7 +69,8 @@ func StructFieldsUnmarshalMethods(receiverName string, receiverType string, fiel
 			ReceiverName: receiverName,
 			ReceiverType: expression.Type(receiverType).Pointer(),
 			Function: decl.Function{
-				Name: "UnmarshalJSONString",
+				Name:    "UnmarshalJSONString",
+				Comment: "UnmarshalJSONString deserializes data, ignoring unrecognized keys.",
 				FuncType: expression.FuncType{
 					Params:      expression.FuncParams{expression.NewFuncParam("data", expression.StringType)},
 					ReturnTypes: []expression.Type{expression.ErrorType},
@@ -91,7 +94,8 @@ func StructFieldsUnmarshalMethods(receiverName string, receiverType string, fiel
 			ReceiverName: receiverName,
 			ReceiverType: expression.Type(receiverType).Pointer(),
 			Function: decl.Function{
-				Name: "UnmarshalStrictJSON",
+				Name:    "UnmarshalJSONStrict",
+				Comment: "UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.\nPrefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.",
 				FuncType: expression.FuncType{
 					Params:      expression.FuncParams{expression.NewFuncParam("data", expression.ByteSliceType)},
 					ReturnTypes: []expression.Type{expression.ErrorType},
@@ -115,7 +119,8 @@ func StructFieldsUnmarshalMethods(receiverName string, receiverType string, fiel
 			ReceiverName: receiverName,
 			ReceiverType: expression.Type(receiverType).Pointer(),
 			Function: decl.Function{
-				Name: "UnmarshalStrictJSONString",
+				Name:    "UnmarshalJSONStringStrict",
+				Comment: "UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.",
 				FuncType: expression.FuncType{
 					Params:      expression.FuncParams{expression.NewFuncParam("data", expression.StringType)},
 					ReturnTypes: []expression.Type{expression.ErrorType},
@@ -285,7 +290,7 @@ type structFieldsUnmarshalJSONMethodStmts struct {
 func visitStructFieldsUnmarshalJSONMethodStmts(selector astgen.ASTExpr, field JSONFieldDefinition, info types.PkgInfo) (structFieldsUnmarshalJSONMethodStmts, error) {
 	result := structFieldsUnmarshalJSONMethodStmts{}
 
-	typeProvider, err := NewConjureTypeProvider(field.Type)
+	typeProvider, err := visitors.NewConjureTypeProvider(field.Type)
 	if err != nil {
 		return result, err
 	}
@@ -300,7 +305,7 @@ func visitStructFieldsUnmarshalJSONMethodStmts(selector astgen.ASTExpr, field JS
 		return result, err
 	}
 	// If a field is not a collection or optional, it is required.
-	requiredField := collectionExpression == nil && !typeProvider.IsSpecificType(IsOptional) // TODO(bmoylan) This does not handle aliases of optionals
+	requiredField := collectionExpression == nil && !typeProvider.IsSpecificType(visitors.IsOptional) // TODO(bmoylan) This does not handle aliases of optionals
 	seenVar := "seen" + field.FieldSelector
 
 	if requiredField {
@@ -469,12 +474,50 @@ func (v *gjsonUnmarshalValueVisitor) VisitPrimitive(t spec.PrimitiveType) error 
 				RHS: expression.NewCallExpression(expression.NewSelector(binaryObj, "Bytes")),
 			})
 		}
-	case spec.PrimitiveType_BEARERTOKEN, spec.PrimitiveType_DATETIME, spec.PrimitiveType_RID, spec.PrimitiveType_UUID:
+	case spec.PrimitiveType_BEARERTOKEN:
 		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"))
-		v.stmts = append(v.stmts, unmarshalTextValue(v.selector, v.valueVar))
+		v.stmts = append(v.stmts, &statement.Assignment{
+			LHS: []astgen.ASTExpr{v.selector},
+			Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
+			RHS: expression.NewCallFunction("bearertoken", "Token",
+				expression.NewSelector(expression.VariableVal(v.valueVar), "Str"),
+			),
+		})
+	case spec.PrimitiveType_DATETIME:
+		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"))
+		v.stmts = append(v.stmts, &statement.Assignment{
+			LHS: []astgen.ASTExpr{v.selector, expression.VariableVal("err")},
+			Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
+			RHS: expression.NewCallFunction("datetime", "ParseDateTime",
+				expression.NewSelector(expression.VariableVal(v.valueVar), "Str"),
+			),
+		})
+	case spec.PrimitiveType_RID:
+		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"))
+		v.stmts = append(v.stmts, &statement.Assignment{
+			LHS: []astgen.ASTExpr{v.selector, expression.VariableVal("err")},
+			Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
+			RHS: expression.NewCallFunction("rid", "ParseRID",
+				expression.NewSelector(expression.VariableVal(v.valueVar), "Str"),
+			),
+		})
 	case spec.PrimitiveType_SAFELONG:
 		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "Number"))
-		v.stmts = append(v.stmts, unmarshalJSONValue(v.selector, v.valueVar))
+		v.stmts = append(v.stmts, &statement.Assignment{
+			LHS: []astgen.ASTExpr{v.selector, expression.VariableVal("err")},
+			Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
+			RHS: expression.NewCallFunction("safelong", "NewSafeLong",
+				expression.NewCallFunction(v.valueVar, "Int")),
+		})
+	case spec.PrimitiveType_UUID:
+		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"))
+		v.stmts = append(v.stmts, &statement.Assignment{
+			LHS: []astgen.ASTExpr{v.selector, expression.VariableVal("err")},
+			Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
+			RHS: expression.NewCallFunction("uuid", "ParseUUID",
+				expression.NewSelector(expression.VariableVal(v.valueVar), "Str"),
+			),
+		})
 	case spec.PrimitiveType_UNKNOWN:
 		return errors.New("Unsupported primitive type " + t.String())
 	default:
@@ -571,11 +614,11 @@ func (v *gjsonUnmarshalValueVisitor) VisitSet(t spec.SetType) error {
 }
 
 func (v *gjsonUnmarshalValueVisitor) VisitMap(t spec.MapType) error {
-	mapTypeProvider, err := NewConjureTypeProvider(spec.NewTypeFromMap(t))
+	mapTypeProvider, err := visitors.NewConjureTypeProvider(spec.NewTypeFromMap(t))
 	if err != nil {
 		return err
 	}
-	keyTypeProvider, err := NewConjureTypeProvider(t.KeyType)
+	keyTypeProvider, err := visitors.NewConjureTypeProvider(t.KeyType)
 	if err != nil {
 		return err
 	}
@@ -584,11 +627,11 @@ func (v *gjsonUnmarshalValueVisitor) VisitMap(t spec.MapType) error {
 		return err
 	}
 	// Use binary.Binary for map keys since []byte is invalid in go maps.
-	if keyTypeProvider.IsSpecificType(IsBinary) {
+	if keyTypeProvider.IsSpecificType(visitors.IsBinary) {
 		keyTyper = types.BinaryPkg
 	}
 	// Use boolean.Boolean for map keys since conjure boolean keys are serialized as strings
-	if keyTypeProvider.IsSpecificType(IsBoolean) {
+	if keyTypeProvider.IsSpecificType(visitors.IsBoolean) {
 		keyTyper = types.BooleanPkg
 	}
 
@@ -686,7 +729,7 @@ func (v *gjsonUnmarshalValueVisitor) VisitExternal(_ spec.ExternalReference) err
 }
 
 func (v *gjsonUnmarshalValueVisitor) VisitReference(t spec.TypeName) error {
-	typ, ok := v.info.CustomTypes().Get(TypeNameToTyperName(t))
+	typ, ok := v.info.CustomTypes().Get(visitors.TypeNameToTyperName(t))
 	if !ok {
 		return errors.Errorf("reference type not found %s", t.Name)
 	}
@@ -722,19 +765,19 @@ type gjsonUnmarshalValueReferenceDefVisitor struct {
 }
 
 func (v *gjsonUnmarshalValueReferenceDefVisitor) VisitAlias(def spec.AliasDefinition) error {
-	aliasTypeProvider, err := NewConjureTypeProvider(def.Alias)
+	aliasTypeProvider, err := visitors.NewConjureTypeProvider(def.Alias)
 	if err != nil {
 		return err
 	}
-	if aliasTypeProvider.IsSpecificType(IsString) {
+	if aliasTypeProvider.IsSpecificType(visitors.IsString) {
 		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"))
 		v.stmts = append(v.stmts, statement.NewAssignment(v.selector, tokenOrDefault(v.selectorToken, token.ASSIGN),
 			expression.NewCallExpression(expression.Type(v.typer.GoType(v.info)), expression.NewSelector(expression.VariableVal(v.valueVar), "Str"))))
-	} else if aliasTypeProvider.IsSpecificType(IsText) {
+	} else if aliasTypeProvider.IsSpecificType(visitors.IsText) {
 		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"))
 		v.stmts = append(v.stmts, unmarshalTextValue(v.selector, v.valueVar))
 	} else {
-		v.stmts = append(v.stmts, unmarshalJSONValue(v.selector, v.valueVar))
+		v.stmts = append(v.stmts, unmarshalJSONStringValue(v.selector, v.valueVar))
 	}
 	return nil
 }
@@ -747,13 +790,13 @@ func (v *gjsonUnmarshalValueReferenceDefVisitor) VisitEnum(_ spec.EnumDefinition
 
 func (v *gjsonUnmarshalValueReferenceDefVisitor) VisitObject(def spec.ObjectDefinition) error {
 	if len(def.Fields) > 0 {
-		v.stmts = append(v.stmts, unmarshalJSONValue(v.selector, v.valueVar))
+		v.stmts = append(v.stmts, unmarshalJSONStringValue(v.selector, v.valueVar))
 	}
 	return nil
 }
 
 func (v *gjsonUnmarshalValueReferenceDefVisitor) VisitUnion(_ spec.UnionDefinition) error {
-	v.stmts = append(v.stmts, unmarshalJSONValue(v.selector, v.valueVar))
+	v.stmts = append(v.stmts, unmarshalJSONStringValue(v.selector, v.valueVar))
 	return nil
 }
 
@@ -775,19 +818,30 @@ func unmarshalTextValue(selector astgen.ASTExpr, valueVar string) astgen.ASTStmt
 }
 
 func declVar(varName string, typ spec.Type, info types.PkgInfo) (*statement.Decl, error) {
-	valTyper, err := NewConjureTypeProviderTyper(typ, info)
+	valTyper, err := visitors.NewConjureTypeProviderTyper(typ, info)
 	if err != nil {
 		return nil, err
 	}
 	return statement.NewDecl(decl.NewVar(varName, expression.Type(valTyper.GoType(info)))), nil
 }
 
-func unmarshalJSONValue(selector astgen.ASTExpr, valueVar string) astgen.ASTStmt {
-	return &statement.Assignment{
-		LHS: []astgen.ASTExpr{expression.VariableVal("err")},
-		Tok: token.ASSIGN,
-		RHS: expression.NewCallExpression(expression.NewSelector(selector, "UnmarshalJSON"),
-			expression.NewCallExpression(expression.Type("[]byte"), expression.NewSelector(expression.VariableVal(valueVar), "Raw"))),
+func unmarshalJSONStringValue(selector astgen.ASTExpr, valueVar string) astgen.ASTStmt {
+	return &statement.If{
+		Cond: expression.VariableVal("strict"),
+		Body: []astgen.ASTStmt{
+			&statement.Assignment{
+				LHS: []astgen.ASTExpr{expression.VariableVal("err")},
+				Tok: token.ASSIGN,
+				RHS: expression.NewCallExpression(expression.NewSelector(selector, "UnmarshalJSONStringStrict"),
+					expression.NewSelector(expression.VariableVal(valueVar), "Raw")),
+			},
+		},
+		Else: &statement.Assignment{
+			LHS: []astgen.ASTExpr{expression.VariableVal("err")},
+			Tok: token.ASSIGN,
+			RHS: expression.NewCallExpression(expression.NewSelector(selector, "UnmarshalJSONString"),
+				expression.NewSelector(expression.VariableVal(valueVar), "Raw")),
+		},
 	}
 }
 

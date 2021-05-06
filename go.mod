@@ -5,7 +5,6 @@ go 1.13
 require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/nmiyake/pkg/dirs v1.0.1
-	github.com/palantir/conjure-go-runtime v0.4.0
 	github.com/palantir/conjure-go-runtime/v2 v2.9.1
 	github.com/palantir/go-ptimports/v2 v2.9.0
 	github.com/palantir/goastwriter v0.1.0
