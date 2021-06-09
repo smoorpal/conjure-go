@@ -35,112 +35,16 @@ type JSONFieldDefinition struct {
 	Type          spec.Type
 }
 
-func StructFieldsUnmarshalMethods(receiverName string, receiverType string, fields []JSONFieldDefinition, info types.PkgInfo) ([]astgen.ASTDecl, error) {
-	info.AddImports("unsafe", "github.com/tidwall/gjson", "github.com/palantir/conjure-go-runtime/v2/conjure-go-contract/errors")
+func StructFieldsUnmarshalMethods(
+	receiverName string,
+	receiverType string,
+	fields []JSONFieldDefinition,
+	info types.PkgInfo,
+) ([]astgen.ASTDecl, error) {
+	info.AddImports("github.com/tidwall/gjson", "github.com/palantir/conjure-go-runtime/v2/conjure-go-contract/errors")
 	var methods []astgen.ASTDecl
 
-	methods = append(methods,
-		&decl.Method{
-			ReceiverName: receiverName,
-			ReceiverType: expression.Type(receiverType).Pointer(),
-			Function: decl.Function{
-				Name:    "UnmarshalJSON",
-				Comment: "UnmarshalJSON deserializes data, ignoring unrecognized keys.\nPrefer UnmarshalJSONString if data is already in string form to avoid an extra copy.",
-				FuncType: expression.FuncType{
-					Params:      expression.FuncParams{expression.NewFuncParam("data", expression.ByteSliceType)},
-					ReturnTypes: []expression.Type{expression.ErrorType},
-				},
-				Body: []astgen.ASTStmt{
-					// if !gjson.ValidBytes(data) { return errors.NewInvalidArgument() }
-					&statement.If{
-						Cond: expression.NewUnary(token.NOT, expression.NewCallFunction("gjson", "ValidBytes", expression.VariableVal("data"))),
-						Body: []astgen.ASTStmt{
-							statement.NewReturn(expression.NewCallFunction("errors", "NewInvalidArgument")),
-						},
-					},
-					// return o.unmarshalGJSON(gjson.ParseBytes(data), false)
-					statement.NewReturn(expression.NewCallFunction(receiverName, "unmarshalGJSON",
-						expression.NewCallFunction("gjson", "ParseBytes", expression.VariableVal("data")),
-						expression.VariableVal("false"))),
-				},
-			},
-		},
-		&decl.Method{
-			ReceiverName: receiverName,
-			ReceiverType: expression.Type(receiverType).Pointer(),
-			Function: decl.Function{
-				Name:    "UnmarshalJSONString",
-				Comment: "UnmarshalJSONString deserializes data, ignoring unrecognized keys.",
-				FuncType: expression.FuncType{
-					Params:      expression.FuncParams{expression.NewFuncParam("data", expression.StringType)},
-					ReturnTypes: []expression.Type{expression.ErrorType},
-				},
-				Body: []astgen.ASTStmt{
-					// if !gjson.Valid(data) { return errors.NewInvalidArgument() }
-					&statement.If{
-						Cond: expression.NewUnary(token.NOT, expression.NewCallFunction("gjson", "Valid", expression.VariableVal("data"))),
-						Body: []astgen.ASTStmt{
-							statement.NewReturn(expression.NewCallFunction("errors", "NewInvalidArgument")),
-						},
-					},
-					// return o.unmarshalGJSON(gjson.Parse(data), false)
-					statement.NewReturn(expression.NewCallFunction(receiverName, "unmarshalGJSON",
-						expression.NewCallFunction("gjson", "Parse", expression.VariableVal("data")),
-						expression.VariableVal("false"))),
-				},
-			},
-		},
-		&decl.Method{
-			ReceiverName: receiverName,
-			ReceiverType: expression.Type(receiverType).Pointer(),
-			Function: decl.Function{
-				Name:    "UnmarshalJSONStrict",
-				Comment: "UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.\nPrefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.",
-				FuncType: expression.FuncType{
-					Params:      expression.FuncParams{expression.NewFuncParam("data", expression.ByteSliceType)},
-					ReturnTypes: []expression.Type{expression.ErrorType},
-				},
-				Body: []astgen.ASTStmt{
-					// if !gjson.ValidBytes(data) { return errors.NewInvalidArgument() }
-					&statement.If{
-						Cond: expression.NewUnary(token.NOT, expression.NewCallFunction("gjson", "ValidBytes", expression.VariableVal("data"))),
-						Body: []astgen.ASTStmt{
-							statement.NewReturn(expression.NewCallFunction("errors", "NewInvalidArgument")),
-						},
-					},
-					// return o.unmarshalGJSON(gjson.ParseBytes(data), true)
-					statement.NewReturn(expression.NewCallFunction(receiverName, "unmarshalGJSON",
-						expression.NewCallFunction("gjson", "ParseBytes", expression.VariableVal("data")),
-						expression.VariableVal("true"))),
-				},
-			},
-		},
-		&decl.Method{
-			ReceiverName: receiverName,
-			ReceiverType: expression.Type(receiverType).Pointer(),
-			Function: decl.Function{
-				Name:    "UnmarshalJSONStringStrict",
-				Comment: "UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.",
-				FuncType: expression.FuncType{
-					Params:      expression.FuncParams{expression.NewFuncParam("data", expression.StringType)},
-					ReturnTypes: []expression.Type{expression.ErrorType},
-				},
-				Body: []astgen.ASTStmt{
-					// if !gjson.Valid(data) { return errors.NewInvalidArgument() }
-					&statement.If{
-						Cond: expression.NewUnary(token.NOT, expression.NewCallFunction("gjson", "Valid", expression.VariableVal("data"))),
-						Body: []astgen.ASTStmt{
-							statement.NewReturn(expression.NewCallFunction("errors", "NewInvalidArgument")),
-						},
-					},
-					// return o.unmarshalGJSON(gjson.Parse(data), false)
-					statement.NewReturn(expression.NewCallFunction(receiverName, "unmarshalGJSON",
-						expression.NewCallFunction("gjson", "Parse", expression.VariableVal("data")),
-						expression.VariableVal("true"))),
-				},
-			},
-		},
-	)
+	methods = append(methods, publicUnmarshalJSONMethods(receiverName, receiverType)...)
 
 	unmarshalGJSONBody, err := visitStructFieldsUnmarshalGJSONMethodBody(receiverName, fields, info)
 	if err != nil {
@@ -163,6 +67,149 @@ func StructFieldsUnmarshalMethods(receiverName string, receiverType string, fiel
 	})
 
 	return methods, nil
+}
+
+// publicUnmarshalJSONMethods Creates four methods that delegate to unmarshalGJSON(value gjson.Value, strict bool) which must exist on the type.
+//
+//	// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+//	// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
+//	func (o *BinaryMap) UnmarshalJSON(data []byte) error {
+//		if !gjson.ValidBytes(data) { return errors.NewInvalidArgument() }
+//		return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+//	}
+//	// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
+//	func (o *BinaryMap) UnmarshalJSONString(data string) error {
+//		if !gjson.Valid(data) { return errors.NewInvalidArgument() }
+//		return o.unmarshalGJSON(gjson.Parse(data), false)
+//	}
+//	// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+//	// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+//	func (o *BinaryMap) UnmarshalJSONStrict(data []byte) error {
+//		if !gjson.ValidBytes(data) { return errors.NewInvalidArgument() }
+//		return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+//	}
+//	// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+//	func (o *BinaryMap) UnmarshalJSONStringStrict(data string) error {
+//		if !gjson.Valid(data) { return errors.NewInvalidArgument() }
+//		return o.unmarshalGJSON(gjson.Parse(data), true)
+//	}
+//	func (o *BinaryMap) UnmarshalYAML(unmarshal func(interface{}) error) error {
+//		jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+//		if err != nil { return errors.WrapWithInvalidArgument(err) }
+//		return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+//	}
+func publicUnmarshalJSONMethods(receiverName string, receiverType string) []astgen.ASTDecl {
+	return []astgen.ASTDecl{
+		&decl.Method{
+			ReceiverName: receiverName,
+			ReceiverType: expression.Type(receiverType).Pointer(),
+			Function: decl.Function{
+				Name:    "UnmarshalJSON",
+				Comment: "UnmarshalJSON deserializes data, ignoring unrecognized keys.\nPrefer UnmarshalJSONString if data is already in string form to avoid an extra copy.",
+				FuncType: expression.FuncType{
+					Params:      expression.FuncParams{expression.NewFuncParam("data", expression.ByteSliceType)},
+					ReturnTypes: []expression.Type{expression.ErrorType},
+				},
+				Body: []astgen.ASTStmt{
+					validDataJSONBytesCheck(),
+					// return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+					statement.NewReturn(expression.NewCallFunction(receiverName, "unmarshalGJSON",
+						expression.NewCallFunction("gjson", "ParseBytes", expression.VariableVal("data")),
+						expression.VariableVal("false"))),
+				},
+			},
+		},
+		&decl.Method{
+			ReceiverName: receiverName,
+			ReceiverType: expression.Type(receiverType).Pointer(),
+			Function: decl.Function{
+				Name:    "UnmarshalJSONString",
+				Comment: "UnmarshalJSONString deserializes data, ignoring unrecognized keys.",
+				FuncType: expression.FuncType{
+					Params:      expression.FuncParams{expression.NewFuncParam("data", expression.StringType)},
+					ReturnTypes: []expression.Type{expression.ErrorType},
+				},
+				Body: []astgen.ASTStmt{
+					validDataJSONStringCheck(),
+					// return o.unmarshalGJSON(gjson.Parse(data), false)
+					statement.NewReturn(expression.NewCallFunction(receiverName, "unmarshalGJSON",
+						expression.NewCallFunction("gjson", "Parse", expression.VariableVal("data")),
+						expression.VariableVal("false"))),
+				},
+			},
+		},
+		&decl.Method{
+			ReceiverName: receiverName,
+			ReceiverType: expression.Type(receiverType).Pointer(),
+			Function: decl.Function{
+				Name:    "UnmarshalJSONStrict",
+				Comment: "UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.\nPrefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.",
+				FuncType: expression.FuncType{
+					Params:      expression.FuncParams{expression.NewFuncParam("data", expression.ByteSliceType)},
+					ReturnTypes: []expression.Type{expression.ErrorType},
+				},
+				Body: []astgen.ASTStmt{
+					validDataJSONBytesCheck(),
+					// return o.unmarshalGJSON(gjson.ParseBytes(data), true)
+					statement.NewReturn(expression.NewCallFunction(receiverName, "unmarshalGJSON",
+						expression.NewCallFunction("gjson", "ParseBytes", expression.VariableVal("data")),
+						expression.VariableVal("true"))),
+				},
+			},
+		},
+		&decl.Method{
+			ReceiverName: receiverName,
+			ReceiverType: expression.Type(receiverType).Pointer(),
+			Function: decl.Function{
+				Name:    "UnmarshalJSONStringStrict",
+				Comment: "UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.",
+				FuncType: expression.FuncType{
+					Params:      expression.FuncParams{expression.NewFuncParam("data", expression.StringType)},
+					ReturnTypes: []expression.Type{expression.ErrorType},
+				},
+				Body: []astgen.ASTStmt{
+					validDataJSONStringCheck(),
+					// return o.unmarshalGJSON(gjson.Parse(data), true)
+					statement.NewReturn(expression.NewCallFunction(receiverName, "unmarshalGJSON",
+						expression.NewCallFunction("gjson", "Parse", expression.VariableVal("data")),
+						expression.VariableVal("true"))),
+				},
+			},
+		},
+		&decl.Method{
+			ReceiverName: receiverName,
+			ReceiverType: expression.Type(receiverType).Pointer(),
+			Function: decl.Function{
+				Name:    "UnmarshalYAML",
+				Comment: "UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.",
+				FuncType: expression.FuncType{
+					Params: []*expression.FuncParam{
+						expression.NewFuncParam("unmarshal", expression.Type("func(interface{}) error")),
+					},
+					ReturnTypes: []expression.Type{
+						expression.ErrorType,
+					},
+				},
+				Body: []astgen.ASTStmt{
+					&statement.Assignment{
+						LHS: []astgen.ASTExpr{expression.VariableVal("data"), expression.VariableVal("err")},
+						Tok: token.DEFINE,
+						RHS: expression.NewCallFunction("safeyaml", "UnmarshalerToJSONBytes", expression.VariableVal("unmarshal")),
+					},
+					&statement.If{
+						Cond: expression.NewBinary(expression.VariableVal("err"), token.NEQ, expression.Nil),
+						Body: []astgen.ASTStmt{statement.NewReturn(
+							expression.NewCallFunction("errors", "WrapWithInvalidArgument", expression.VariableVal("err")),
+						)},
+					},
+					// return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+					statement.NewReturn(expression.NewCallFunction(receiverName, "unmarshalGJSON",
+						expression.NewCallFunction("gjson", "ParseBytes", expression.VariableVal("data")),
+						expression.VariableVal("false"))),
+				},
+			},
+		},
+	}
 }
 
 func visitStructFieldsUnmarshalGJSONMethodBody(receiverName string, fields []JSONFieldDefinition, info types.PkgInfo) ([]astgen.ASTStmt, error) {
@@ -869,6 +916,27 @@ func gjsonTypeCondition(valueVar string, typeNames ...string) astgen.ASTExpr {
 	return cond
 }
 
+// if !gjson.Valid(data) { return errors.NewInvalidArgument() }
+func validDataJSONStringCheck() *statement.If {
+	return &statement.If{
+		Cond: expression.NewUnary(token.NOT, expression.NewCallFunction("gjson", "Valid", expression.VariableVal("data"))),
+		Body: []astgen.ASTStmt{
+			statement.NewReturn(expression.NewCallFunction("errors", "NewInvalidArgument")),
+		},
+	}
+}
+
+// if !gjson.ValidBytes(data) { return errors.NewInvalidArgument() }
+func validDataJSONBytesCheck() *statement.If {
+	return &statement.If{
+		Cond: expression.NewUnary(token.NOT, expression.NewCallFunction("gjson", "ValidBytes", expression.VariableVal("data"))),
+		Body: []astgen.ASTStmt{
+			statement.NewReturn(expression.NewCallFunction("errors", "NewInvalidArgument")),
+		},
+	}
+}
+
+// err = errors.NewInvalidArgument()
 func errEqualNewInvalidArgument() *statement.Assignment {
 	return statement.NewAssignment(
 		expression.VariableVal("err"),

@@ -225,7 +225,7 @@ func (o BinaryMap) MarshalYAML() (interface{}, error) {
 func (o *BinaryMap) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return err
+		return errors.WrapWithInvalidArgument()
 	}
 	return o.UnmarshalJSON(jsonBytes)
 }
