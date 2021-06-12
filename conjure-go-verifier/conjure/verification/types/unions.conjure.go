@@ -84,14 +84,6 @@ func (u Union) MarshalYAML() (interface{}, error) {
 	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
-func (u *Union) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return u.UnmarshalJSON(jsonBytes)
-}
-
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (u *Union) UnmarshalJSON(data []byte) error {
@@ -124,6 +116,15 @@ func (u *Union) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return u.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (u *Union) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return u.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (u *Union) unmarshalGJSON(value gjson.Result, strict bool) error {

@@ -2,4 +2,64 @@
 
 package server
 
+import (
+	"github.com/palantir/conjure-go-runtime/v2/conjure-go-contract/errors"
+	"github.com/palantir/pkg/safeyaml"
+	"github.com/tidwall/gjson"
+)
+
 type EndpointName string
+
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
+func (a *EndpointName) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
+func (a *EndpointName) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (a *EndpointName) UnmarshalJSONStrict(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (a *EndpointName) UnmarshalJSONStringStrict(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (a *EndpointName) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (a *EndpointName) unmarshalGJSON(value gjson.Result, strict bool) error {
+	var obj string
+	var err error
+	if value.Type != gjson.String {
+		err = errors.NewInvalidArgument()
+		return err
+	}
+	obj = value.Str
+	return err
+}

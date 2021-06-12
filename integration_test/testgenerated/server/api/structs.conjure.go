@@ -25,6 +25,14 @@ func (o CustomObject) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(CustomObjectAlias(o))
 }
 
+func (o CustomObject) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
+}
+
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *CustomObject) UnmarshalJSON(data []byte) error {
@@ -59,6 +67,15 @@ func (o *CustomObject) UnmarshalJSONStringStrict(data string) error {
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
 
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *CustomObject) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
 func (o *CustomObject) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
 		return errors.NewInvalidArgument()
@@ -91,20 +108,4 @@ func (o *CustomObject) unmarshalGJSON(value gjson.Result, strict bool) error {
 		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
 	}
 	return nil
-}
-
-func (o CustomObject) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *CustomObject) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
 }

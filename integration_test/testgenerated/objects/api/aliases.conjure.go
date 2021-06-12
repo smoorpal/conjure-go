@@ -5,15 +5,276 @@ package api
 import (
 	"encoding/json"
 
+	"github.com/palantir/conjure-go-runtime/v2/conjure-go-contract/errors"
+	"github.com/palantir/pkg/binary"
 	"github.com/palantir/pkg/rid"
 	"github.com/palantir/pkg/safejson"
 	"github.com/palantir/pkg/safeyaml"
 	"github.com/palantir/pkg/uuid"
+	"github.com/tidwall/gjson"
 )
 
 type BinaryAlias []byte
+
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
+func (a *BinaryAlias) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
+func (a *BinaryAlias) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (a *BinaryAlias) UnmarshalJSONStrict(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (a *BinaryAlias) UnmarshalJSONStringStrict(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (a *BinaryAlias) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (a *BinaryAlias) unmarshalGJSON(value gjson.Result, strict bool) error {
+	obj := make([]byte, 0)
+	var err error
+	if value.Type != gjson.String {
+		err = errors.NewInvalidArgument()
+		return err
+	}
+	obj, err = binary.Binary(value.Str).Bytes()
+	return err
+}
+
+type CompoundAlias Compound
+
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
+func (a *CompoundAlias) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
+func (a *CompoundAlias) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (a *CompoundAlias) UnmarshalJSONStrict(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (a *CompoundAlias) UnmarshalJSONStringStrict(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (a *CompoundAlias) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (a *CompoundAlias) unmarshalGJSON(value gjson.Result, strict bool) error {
+	var obj Compound
+	var err error
+	if strict {
+		err = obj.UnmarshalJSONStringStrict(value.Raw)
+	} else {
+		err = obj.UnmarshalJSONString(value.Raw)
+	}
+	return err
+}
+
+func (a CompoundAlias) MarshalJSON() ([]byte, error) {
+	return safejson.Marshal(Compound(a))
+}
+
+func (a CompoundAlias) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(a)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
+}
+
+type OptionalCompound struct {
+	Value *Compound
+}
+
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
+func (a *OptionalCompound) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
+func (a *OptionalCompound) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (a *OptionalCompound) UnmarshalJSONStrict(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (a *OptionalCompound) UnmarshalJSONStringStrict(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (a *OptionalCompound) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (a *OptionalCompound) unmarshalGJSON(value gjson.Result, strict bool) error {
+	var obj *Compound
+	var err error
+	if value.Type != gjson.Null {
+		var optionalValue Compound
+		if strict {
+			err = optionalValue.UnmarshalJSONStringStrict(value.Raw)
+		} else {
+			err = optionalValue.UnmarshalJSONString(value.Raw)
+		}
+		obj = &optionalValue
+	}
+	return err
+}
+
+func (a OptionalCompound) MarshalJSON() ([]byte, error) {
+	if a.Value == nil {
+		return nil, nil
+	}
+	return safejson.Marshal(a.Value)
+}
+
+func (a OptionalCompound) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(a)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
+}
+
 type OptionalUuidAlias struct {
 	Value *uuid.UUID
+}
+
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
+func (a *OptionalUuidAlias) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
+func (a *OptionalUuidAlias) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (a *OptionalUuidAlias) UnmarshalJSONStrict(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (a *OptionalUuidAlias) UnmarshalJSONStringStrict(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (a *OptionalUuidAlias) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (a *OptionalUuidAlias) unmarshalGJSON(value gjson.Result, strict bool) error {
+	var obj *uuid.UUID
+	var err error
+	if value.Type != gjson.Null {
+		if value.Type != gjson.String {
+			err = errors.NewInvalidArgument()
+			return err
+		}
+		var optionalValue uuid.UUID
+		optionalValue, err = uuid.ParseUUID(value.Str)
+		obj = &optionalValue
+	}
+	return err
 }
 
 func (a OptionalUuidAlias) MarshalText() ([]byte, error) {
@@ -38,15 +299,61 @@ func (a OptionalUuidAlias) MarshalYAML() (interface{}, error) {
 	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
-func (a *OptionalUuidAlias) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
+type RidAlias rid.ResourceIdentifier
+
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
+func (a *RidAlias) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
 	}
-	return a.UnmarshalJSON(jsonBytes)
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
-type RidAlias rid.ResourceIdentifier
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
+func (a *RidAlias) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (a *RidAlias) UnmarshalJSONStrict(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (a *RidAlias) UnmarshalJSONStringStrict(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (a *RidAlias) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (a *RidAlias) unmarshalGJSON(value gjson.Result, strict bool) error {
+	var obj rid.ResourceIdentifier
+	var err error
+	if value.Type != gjson.String {
+		err = errors.NewInvalidArgument()
+		return err
+	}
+	obj, err = rid.ParseRID(value.Str)
+	return err
+}
 
 func (a RidAlias) String() string {
 	return rid.ResourceIdentifier(a).String()
@@ -67,6 +374,60 @@ func (a *RidAlias) UnmarshalText(data []byte) error {
 
 type UuidAlias uuid.UUID
 
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
+func (a *UuidAlias) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
+func (a *UuidAlias) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (a *UuidAlias) UnmarshalJSONStrict(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (a *UuidAlias) UnmarshalJSONStringStrict(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (a *UuidAlias) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (a *UuidAlias) unmarshalGJSON(value gjson.Result, strict bool) error {
+	var obj uuid.UUID
+	var err error
+	if value.Type != gjson.String {
+		err = errors.NewInvalidArgument()
+		return err
+	}
+	obj, err = uuid.ParseUUID(value.Str)
+	return err
+}
+
 func (a UuidAlias) String() string {
 	return uuid.UUID(a).String()
 }
@@ -82,35 +443,4 @@ func (a *UuidAlias) UnmarshalText(data []byte) error {
 	}
 	*a = UuidAlias(rawUuidAlias)
 	return nil
-}
-
-type UuidAlias2 Compound
-
-func (a UuidAlias2) MarshalJSON() ([]byte, error) {
-	return safejson.Marshal(Compound(a))
-}
-
-func (a *UuidAlias2) UnmarshalJSON(data []byte) error {
-	var rawUuidAlias2 Compound
-	if err := safejson.Unmarshal(data, &rawUuidAlias2); err != nil {
-		return err
-	}
-	*a = UuidAlias2(rawUuidAlias2)
-	return nil
-}
-
-func (a UuidAlias2) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(a)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (a *UuidAlias2) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return a.UnmarshalJSON(jsonBytes)
 }

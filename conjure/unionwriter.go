@@ -59,7 +59,7 @@ func astForUnion(unionDefinition spec.UnionDefinition, info types.PkgInfo, cfg O
 		toSerializerFuncAST(unionTypeName, unionDefinition, fieldNameToGoType),
 		unionMarshalJSONAST(unionTypeName, info),
 		newMarshalYAMLMethod(unionReceiverName, transforms.Export(unionTypeName), info),
-		newUnmarshalYAMLMethod(unionReceiverName, transforms.Export(unionTypeName), info),
+		//newUnmarshalYAMLMethod(unionReceiverName, transforms.Export(unionTypeName), info),
 	}
 	unmarshalJSON, err := unionUnmarshalJSONASTs(unionDefinition, info)
 	if err != nil {
