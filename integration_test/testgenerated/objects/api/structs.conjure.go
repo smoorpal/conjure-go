@@ -316,7 +316,7 @@ func (o *BooleanIntegerMap) unmarshalGJSON(value gjson.Result, strict bool) erro
 				o.Map = make(map[boolean.Boolean]int, 0)
 			}
 			value.ForEach(func(key, value gjson.Result) bool {
-				if key.Type != gjson.False && key.Type != gjson.True {
+				if key.Type != gjson.String {
 					err = errors.NewInvalidArgument()
 					return false
 				}

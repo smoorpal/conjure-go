@@ -19,7 +19,6 @@ import (
 	"go/token"
 	"strings"
 
-	"github.com/palantir/conjure-go/v6/conjure/visitors/jsonencoding"
 	"github.com/palantir/goastwriter/astgen"
 	"github.com/palantir/goastwriter/decl"
 	"github.com/palantir/goastwriter/expression"
@@ -30,6 +29,7 @@ import (
 	"github.com/palantir/conjure-go/v6/conjure/transforms"
 	"github.com/palantir/conjure-go/v6/conjure/types"
 	"github.com/palantir/conjure-go/v6/conjure/visitors"
+	"github.com/palantir/conjure-go/v6/conjure/visitors/jsonencoding"
 )
 
 const (

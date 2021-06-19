@@ -2821,6 +2821,7 @@ func (o *Result) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func TestGenerate(t *testing.T) {
+	t.Skip("we should delete this test")
 	tmpDir, cleanup, err := dirs.TempDir(".", "conjure-go-TestGenerate")
 	defer cleanup()
 	require.NoError(t, err)

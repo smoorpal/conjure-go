@@ -54,12 +54,13 @@ func (a *EndpointName) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (a *EndpointName) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj string
 	var err error
+	var objectValue string
 	if value.Type != gjson.String {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	obj = value.Str
+	objectValue = value.Str
+	*a = EndpointName(objectValue)
 	return err
 }

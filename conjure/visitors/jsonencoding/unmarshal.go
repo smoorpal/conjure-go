@@ -47,7 +47,7 @@ func AliasTypeUnmarshalMethods(
 
 	methods = append(methods, publicUnmarshalJSONMethods(receiverName, receiverType)...)
 
-	unmarshalGJSONBody, err := visitAliasUnmarshalGJSONMethodBody(receiverName, aliasType, info)
+	unmarshalGJSONBody, err := visitAliasUnmarshalGJSONMethodBody(receiverName, receiverType, aliasType, info)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +205,10 @@ func publicUnmarshalJSONMethods(receiverName string, receiverType string) []astg
 					&statement.If{
 						Cond: expression.NewBinary(expression.VariableVal("err"), token.NEQ, expression.Nil),
 						Body: []astgen.ASTStmt{statement.NewReturn(
-							expression.NewCallFunction("errors", "WrapWithInvalidArgument", expression.VariableVal("err")),
+							expression.NewCallFunction("werror", "Wrap",
+								expression.VariableVal("err"),
+								expression.StringVal("failed to convert YAML to JSON"),
+							),
 						)},
 					},
 					// return o.unmarshalGJSON(gjson.ParseBytes(data), false)
@@ -236,7 +239,7 @@ func unmarshalGJSONMethod(receiverName string, receiverType string, body []astge
 	}
 }
 
-func visitAliasUnmarshalGJSONMethodBody(receiverName string, aliasType spec.Type, info types.PkgInfo) ([]astgen.ASTStmt, error) {
+func visitAliasUnmarshalGJSONMethodBody(receiverName string, receiverType string, aliasType spec.Type, info types.PkgInfo) ([]astgen.ASTStmt, error) {
 	typeProvider, err := visitors.NewConjureTypeProvider(aliasType)
 	if err != nil {
 		return nil, err
@@ -246,31 +249,34 @@ func visitAliasUnmarshalGJSONMethodBody(receiverName string, aliasType spec.Type
 		return nil, err
 	}
 	info.AddImports(typer.ImportPaths()...)
+	isOptional := typeProvider.IsSpecificType(visitors.IsOptional)
 
 	var body []astgen.ASTStmt
 
-	isOptional := typeProvider.IsSpecificType(visitors.IsOptional)
-	makeCollection, err := typeProvider.CollectionInitializationIfNeeded(info)
-	if err != nil {
-		return nil, err
-	}
-
-	objectVar := expression.VariableVal("obj")
-	var selector astgen.ASTExpr
-	if collectionExpression, err := typeProvider.CollectionInitializationIfNeeded(info); err != nil {
-		return nil, err
-	} else if collectionExpression != nil {
-		body = append(body, statement.NewAssignment(objectVar, token.DEFINE, collectionExpression))
-	} else if typeProvider.IsSpecificType(visitors.IsOptional) {
-		selector = expression.NewSelector(expression.VariableVal(receiverName), "Value")
-	} else {
-		body = append(body, statement.NewDecl(decl.NewVar(string(objectVar), expression.Type(typer.GoType(info)))))
-	}
 	body = append(body, statement.NewDecl(decl.NewVar("err", expression.ErrorType)))
 
+	var selector astgen.ASTExpr
+	//var selectorToken token.Token
+	if isOptional {
+		selector = expression.NewSelector(expression.VariableVal(receiverName), "Value")
+		//selectorToken = token.ASSIGN
+	} else {
+		selector = expression.VariableVal("objectValue")
+		//selectorToken = token.DEFINE
+		body = append(body, statement.NewDecl(decl.NewVar("objectValue", expression.Type(typer.GoType(info)))))
+
+		if collectionExpression, err := typeProvider.CollectionInitializationIfNeeded(info); err != nil {
+			return nil, err
+		} else if collectionExpression != nil {
+			body = append(body, statement.NewAssignment(selector, token.ASSIGN, collectionExpression))
+		}
+	}
+
+	//objectVar := expression.VariableVal("objectValue")
 	visitor := &gjsonUnmarshalValueVisitor{
-		info:          info,
-		selector:      objectVar,
+		info:     info,
+		selector: selector,
+		//selectorToken: selectorToken,
 		valueVar:      "value",
 		returnErrStmt: statement.NewReturn(expression.VariableVal("err")),
 	}
@@ -282,15 +288,13 @@ func visitAliasUnmarshalGJSONMethodBody(receiverName string, aliasType spec.Type
 	}
 	body = append(body, visitor.stmts...)
 
-	if typeProvider.IsSpecificType(visitors.IsOptional) {
+	//	*a = RidAlias(objectValue)
+	if !isOptional {
 		body = append(body, statement.NewAssignment(
-			expression.NewSelector(expression.VariableVal(receiverName), "Value"),
+			expression.NewUnary(token.MUL, expression.VariableVal(receiverName)),
 			token.ASSIGN,
-			expression.NewUnary(token.AND, )
-			))
-		selector =
-	} else {
-		selector = expression.NewUnary(token.MUL, expression.VariableVal(receiverName))
+			expression.NewCallExpression(expression.Type(receiverType), selector),
+		))
 	}
 
 	body = append(body, statement.NewReturn(expression.VariableVal("err")))
@@ -511,10 +515,19 @@ func (v *gjsonUnmarshalValueVisitor) VisitPrimitive(t spec.PrimitiveType) error 
 		})
 	case spec.PrimitiveType_INTEGER:
 		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "Number"), v.returnErrStmt)
+
+		var rhs astgen.ASTExpr
+		if v.isMapKey {
+			v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"), v.returnErrStmt)
+			rhs = expression.NewCallExpression(expression.IntType, expression.NewCallFunction(v.valueVar, "Int"))
+		} else {
+			v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "False", "True"), v.returnErrStmt)
+			rhs = expression.NewCallExpression(expression.IntType, expression.NewCallFunction(v.valueVar, "Int"))
+		}
 		v.stmts = append(v.stmts, &statement.Assignment{
 			LHS: []astgen.ASTExpr{v.selector},
 			Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
-			RHS: expression.NewCallExpression(expression.IntType, expression.NewCallFunction(v.valueVar, "Int")),
+			RHS: rhs,
 		})
 	case spec.PrimitiveType_DOUBLE:
 		v.info.AddImports("math")
@@ -570,20 +583,19 @@ func (v *gjsonUnmarshalValueVisitor) VisitPrimitive(t spec.PrimitiveType) error 
 			RHS: expression.NewSelector(expression.VariableVal(v.valueVar), "Num"),
 		})
 	case spec.PrimitiveType_BOOLEAN:
-		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "False", "True"), v.returnErrStmt)
+		var rhs astgen.ASTExpr
 		if v.isMapKey {
-			v.stmts = append(v.stmts, &statement.Assignment{
-				LHS: []astgen.ASTExpr{v.selector},
-				Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
-				RHS: expression.NewCallFunction("boolean", "Boolean", expression.NewCallFunction(v.valueVar, "Bool")),
-			})
+			v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"), v.returnErrStmt)
+			rhs = expression.NewCallFunction("boolean", "Boolean", expression.NewCallFunction(v.valueVar, "Bool"))
 		} else {
-			v.stmts = append(v.stmts, &statement.Assignment{
-				LHS: []astgen.ASTExpr{v.selector},
-				Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
-				RHS: expression.NewCallFunction(v.valueVar, "Bool"),
-			})
+			v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "False", "True"), v.returnErrStmt)
+			rhs = expression.NewCallFunction(v.valueVar, "Bool")
 		}
+		v.stmts = append(v.stmts, &statement.Assignment{
+			LHS: []astgen.ASTExpr{v.selector},
+			Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
+			RHS: rhs,
+		})
 	case spec.PrimitiveType_BINARY:
 		v.info.AddImports(types.BinaryPkg.ImportPaths()...)
 		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"), v.returnErrStmt)

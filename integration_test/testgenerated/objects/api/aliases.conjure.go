@@ -11,6 +11,8 @@ import (
 	"github.com/palantir/pkg/safejson"
 	"github.com/palantir/pkg/safeyaml"
 	"github.com/palantir/pkg/uuid"
+	werror "github.com/palantir/witchcraft-go-error"
+	wparams "github.com/palantir/witchcraft-go-params"
 	"github.com/tidwall/gjson"
 )
 
@@ -60,13 +62,15 @@ func (a *BinaryAlias) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (a *BinaryAlias) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]byte, 0)
 	var err error
+	var objectValue []byte
+	objectValue = make([]byte, 0)
 	if value.Type != gjson.String {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	obj, err = binary.Binary(value.Str).Bytes()
+	objectValue, err = binary.Binary(value.Str).Bytes()
+	*a = BinaryAlias(objectValue)
 	return err
 }
 
@@ -116,13 +120,14 @@ func (a *CompoundAlias) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (a *CompoundAlias) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj Compound
 	var err error
+	var objectValue Compound
 	if strict {
-		err = obj.UnmarshalJSONStringStrict(value.Raw)
+		err = objectValue.UnmarshalJSONStringStrict(value.Raw)
 	} else {
-		err = obj.UnmarshalJSONString(value.Raw)
+		err = objectValue.UnmarshalJSONString(value.Raw)
 	}
+	*a = CompoundAlias(objectValue)
 	return err
 }
 
@@ -171,7 +176,7 @@ func (a *OptionalCompound) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (a *OptionalCompound) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return errors.WrapWithInvalidArgument(werror.Error("invalid JSON"), wparams.NewSafeParam("error", "OptionalCompound: Invalid JSON"))
 	}
 	return a.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -186,7 +191,6 @@ func (a *OptionalCompound) UnmarshalYAML(unmarshal func(interface{}) error) erro
 }
 
 func (a *OptionalCompound) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj *Compound
 	var err error
 	if value.Type != gjson.Null {
 		var optionalValue Compound
@@ -195,7 +199,7 @@ func (a *OptionalCompound) unmarshalGJSON(value gjson.Result, strict bool) error
 		} else {
 			err = optionalValue.UnmarshalJSONString(value.Raw)
 		}
-		obj = &optionalValue
+		a.Value = &optionalValue
 	}
 	return err
 }
@@ -263,7 +267,6 @@ func (a *OptionalUuidAlias) UnmarshalYAML(unmarshal func(interface{}) error) err
 }
 
 func (a *OptionalUuidAlias) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj *uuid.UUID
 	var err error
 	if value.Type != gjson.Null {
 		if value.Type != gjson.String {
@@ -272,7 +275,7 @@ func (a *OptionalUuidAlias) unmarshalGJSON(value gjson.Result, strict bool) erro
 		}
 		var optionalValue uuid.UUID
 		optionalValue, err = uuid.ParseUUID(value.Str)
-		obj = &optionalValue
+		a.Value = &optionalValue
 	}
 	return err
 }
@@ -345,13 +348,14 @@ func (a *RidAlias) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (a *RidAlias) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj rid.ResourceIdentifier
 	var err error
+	var objectValue rid.ResourceIdentifier
 	if value.Type != gjson.String {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	obj, err = rid.ParseRID(value.Str)
+	objectValue, err = rid.ParseRID(value.Str)
+	*a = RidAlias(objectValue)
 	return err
 }
 
@@ -418,13 +422,14 @@ func (a *UuidAlias) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (a *UuidAlias) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj uuid.UUID
 	var err error
+	var objectValue uuid.UUID
 	if value.Type != gjson.String {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	obj, err = uuid.ParseUUID(value.Str)
+	objectValue, err = uuid.ParseUUID(value.Str)
+	*a = UuidAlias(objectValue)
 	return err
 }
 

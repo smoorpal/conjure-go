@@ -54,12 +54,13 @@ func (a *StringAlias) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (a *StringAlias) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj string
 	var err error
+	var objectValue string
 	if value.Type != gjson.String {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	obj = value.Str
+	objectValue = value.Str
+	*a = StringAlias(objectValue)
 	return err
 }

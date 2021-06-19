@@ -65,13 +65,14 @@ func (a *AliasString) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (a *AliasString) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj string
 	var err error
+	var objectValue string
 	if value.Type != gjson.String {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	obj = value.Str
+	objectValue = value.Str
+	*a = AliasString(objectValue)
 	return err
 }
 
@@ -121,13 +122,14 @@ func (a *BearerTokenAliasExample) UnmarshalYAML(unmarshal func(interface{}) erro
 }
 
 func (a *BearerTokenAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj bearertoken.Token
 	var err error
+	var objectValue bearertoken.Token
 	if value.Type != gjson.String {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	obj = bearertoken.Token(value.Str)
+	objectValue = bearertoken.Token(value.Str)
+	*a = BearerTokenAliasExample(objectValue)
 	return err
 }
 
@@ -194,13 +196,15 @@ func (a *BinaryAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) er
 }
 
 func (a *BinaryAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]byte, 0)
 	var err error
+	var objectValue []byte
+	objectValue = make([]byte, 0)
 	if value.Type != gjson.String {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	obj, err = binary.Binary(value.Str).Bytes()
+	objectValue, err = binary.Binary(value.Str).Bytes()
+	*a = BinaryAliasExample(objectValue)
 	return err
 }
 
@@ -250,13 +254,14 @@ func (a *BooleanAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) e
 }
 
 func (a *BooleanAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj bool
 	var err error
+	var objectValue bool
 	if value.Type != gjson.False && value.Type != gjson.True {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	obj = value.Bool()
+	objectValue = value.Bool()
+	*a = BooleanAliasExample(objectValue)
 	return err
 }
 
@@ -306,13 +311,14 @@ func (a *DateTimeAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) 
 }
 
 func (a *DateTimeAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj datetime.DateTime
 	var err error
+	var objectValue datetime.DateTime
 	if value.Type != gjson.String {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	obj, err = datetime.ParseDateTime(value.Str)
+	objectValue, err = datetime.ParseDateTime(value.Str)
+	*a = DateTimeAliasExample(objectValue)
 	return err
 }
 
@@ -379,30 +385,31 @@ func (a *DoubleAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) er
 }
 
 func (a *DoubleAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj float64
 	var err error
+	var objectValue float64
 	if value.Type != gjson.Number {
 		err = errors.NewInvalidArgument()
 		return err
 	}
 	switch value.Type {
 	case gjson.Number:
-		obj = value.Num
+		objectValue = value.Num
 	case gjson.String:
 		switch value.Str {
 		case "NaN":
-			obj = math.NaN()
+			objectValue = math.NaN()
 		case "Infinity":
-			obj = math.Inf(1)
+			objectValue = math.Inf(1)
 		case "-Infinity":
-			obj = math.Inf(-1)
+			objectValue = math.Inf(-1)
 		default:
 			err = errors.NewInvalidArgument()
 		}
 	default:
 		err = errors.NewInvalidArgument()
 	}
-	obj = value.Num
+	objectValue = value.Num
+	*a = DoubleAliasExample(objectValue)
 	return err
 }
 
@@ -452,13 +459,14 @@ func (a *IntegerAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) e
 }
 
 func (a *IntegerAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj int
 	var err error
+	var objectValue int
 	if value.Type != gjson.Number {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	obj = int(value.Int())
+	objectValue = int(value.Int())
+	*a = IntegerAliasExample(objectValue)
 	return err
 }
 
@@ -508,8 +516,9 @@ func (a *ListAnyAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) e
 }
 
 func (a *ListAnyAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]interface{}, 0)
 	var err error
+	var objectValue []interface{}
+	objectValue = make([]interface{}, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -521,9 +530,10 @@ func (a *ListAnyAliasExample) unmarshalGJSON(value gjson.Result, strict bool) er
 		}
 		var listElement interface{}
 		listElement = value.Value()
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = ListAnyAliasExample(objectValue)
 	return err
 }
 
@@ -573,8 +583,9 @@ func (a *ListBearerTokenAliasExample) UnmarshalYAML(unmarshal func(interface{}) 
 }
 
 func (a *ListBearerTokenAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]bearertoken.Token, 0)
 	var err error
+	var objectValue []bearertoken.Token
+	objectValue = make([]bearertoken.Token, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -586,9 +597,10 @@ func (a *ListBearerTokenAliasExample) unmarshalGJSON(value gjson.Result, strict 
 		}
 		var listElement bearertoken.Token
 		listElement = bearertoken.Token(value.Str)
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = ListBearerTokenAliasExample(objectValue)
 	return err
 }
 
@@ -650,8 +662,9 @@ func (a *ListBinaryAliasExample) UnmarshalYAML(unmarshal func(interface{}) error
 }
 
 func (a *ListBinaryAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([][]byte, 0)
 	var err error
+	var objectValue [][]byte
+	objectValue = make([][]byte, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -663,9 +676,10 @@ func (a *ListBinaryAliasExample) unmarshalGJSON(value gjson.Result, strict bool)
 		}
 		var listElement []byte
 		listElement, err = binary.Binary(value.Str).Bytes()
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = ListBinaryAliasExample(objectValue)
 	return err
 }
 
@@ -715,8 +729,9 @@ func (a *ListBooleanAliasExample) UnmarshalYAML(unmarshal func(interface{}) erro
 }
 
 func (a *ListBooleanAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]bool, 0)
 	var err error
+	var objectValue []bool
+	objectValue = make([]bool, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -728,9 +743,10 @@ func (a *ListBooleanAliasExample) unmarshalGJSON(value gjson.Result, strict bool
 		}
 		var listElement bool
 		listElement = value.Bool()
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = ListBooleanAliasExample(objectValue)
 	return err
 }
 
@@ -780,8 +796,9 @@ func (a *ListDateTimeAliasExample) UnmarshalYAML(unmarshal func(interface{}) err
 }
 
 func (a *ListDateTimeAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]datetime.DateTime, 0)
 	var err error
+	var objectValue []datetime.DateTime
+	objectValue = make([]datetime.DateTime, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -793,9 +810,10 @@ func (a *ListDateTimeAliasExample) unmarshalGJSON(value gjson.Result, strict boo
 		}
 		var listElement datetime.DateTime
 		listElement, err = datetime.ParseDateTime(value.Str)
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = ListDateTimeAliasExample(objectValue)
 	return err
 }
 
@@ -857,8 +875,9 @@ func (a *ListDoubleAliasExample) UnmarshalYAML(unmarshal func(interface{}) error
 }
 
 func (a *ListDoubleAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]float64, 0)
 	var err error
+	var objectValue []float64
+	objectValue = make([]float64, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -887,9 +906,10 @@ func (a *ListDoubleAliasExample) unmarshalGJSON(value gjson.Result, strict bool)
 			err = errors.NewInvalidArgument()
 		}
 		listElement = value.Num
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = ListDoubleAliasExample(objectValue)
 	return err
 }
 
@@ -939,8 +959,9 @@ func (a *ListIntegerAliasExample) UnmarshalYAML(unmarshal func(interface{}) erro
 }
 
 func (a *ListIntegerAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]int, 0)
 	var err error
+	var objectValue []int
+	objectValue = make([]int, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -952,9 +973,10 @@ func (a *ListIntegerAliasExample) unmarshalGJSON(value gjson.Result, strict bool
 		}
 		var listElement int
 		listElement = int(value.Int())
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = ListIntegerAliasExample(objectValue)
 	return err
 }
 
@@ -1004,8 +1026,9 @@ func (a *ListOptionalAnyAliasExample) UnmarshalYAML(unmarshal func(interface{}) 
 }
 
 func (a *ListOptionalAnyAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]*interface{}, 0)
 	var err error
+	var objectValue []*interface{}
+	objectValue = make([]*interface{}, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -1021,9 +1044,10 @@ func (a *ListOptionalAnyAliasExample) unmarshalGJSON(value gjson.Result, strict 
 			optionalValue1 = value.Value()
 			listElement = &optionalValue1
 		}
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = ListOptionalAnyAliasExample(objectValue)
 	return err
 }
 
@@ -1073,8 +1097,9 @@ func (a *ListRidAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) e
 }
 
 func (a *ListRidAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]rid.ResourceIdentifier, 0)
 	var err error
+	var objectValue []rid.ResourceIdentifier
+	objectValue = make([]rid.ResourceIdentifier, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -1086,9 +1111,10 @@ func (a *ListRidAliasExample) unmarshalGJSON(value gjson.Result, strict bool) er
 		}
 		var listElement rid.ResourceIdentifier
 		listElement, err = rid.ParseRID(value.Str)
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = ListRidAliasExample(objectValue)
 	return err
 }
 
@@ -1150,8 +1176,9 @@ func (a *ListSafeLongAliasExample) UnmarshalYAML(unmarshal func(interface{}) err
 }
 
 func (a *ListSafeLongAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]safelong.SafeLong, 0)
 	var err error
+	var objectValue []safelong.SafeLong
+	objectValue = make([]safelong.SafeLong, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -1163,9 +1190,10 @@ func (a *ListSafeLongAliasExample) unmarshalGJSON(value gjson.Result, strict boo
 		}
 		var listElement safelong.SafeLong
 		listElement, err = safelong.NewSafeLong(value.Int())
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = ListSafeLongAliasExample(objectValue)
 	return err
 }
 
@@ -1227,8 +1255,9 @@ func (a *ListStringAliasExample) UnmarshalYAML(unmarshal func(interface{}) error
 }
 
 func (a *ListStringAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]string, 0)
 	var err error
+	var objectValue []string
+	objectValue = make([]string, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -1240,9 +1269,10 @@ func (a *ListStringAliasExample) unmarshalGJSON(value gjson.Result, strict bool)
 		}
 		var listElement string
 		listElement = value.Str
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = ListStringAliasExample(objectValue)
 	return err
 }
 
@@ -1292,8 +1322,9 @@ func (a *ListUuidAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) 
 }
 
 func (a *ListUuidAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]uuid.UUID, 0)
 	var err error
+	var objectValue []uuid.UUID
+	objectValue = make([]uuid.UUID, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -1305,9 +1336,10 @@ func (a *ListUuidAliasExample) unmarshalGJSON(value gjson.Result, strict bool) e
 		}
 		var listElement uuid.UUID
 		listElement, err = uuid.ParseUUID(value.Str)
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = ListUuidAliasExample(objectValue)
 	return err
 }
 
@@ -1369,14 +1401,15 @@ func (a *MapBearerTokenAliasExample) UnmarshalYAML(unmarshal func(interface{}) e
 }
 
 func (a *MapBearerTokenAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make(map[bearertoken.Token]bool, 0)
 	var err error
+	var objectValue map[bearertoken.Token]bool
+	objectValue = make(map[bearertoken.Token]bool, 0)
 	if !value.IsObject() {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	if obj == nil {
-		obj = make(map[bearertoken.Token]bool, 0)
+	if objectValue == nil {
+		objectValue = make(map[bearertoken.Token]bool, 0)
 	}
 	value.ForEach(func(key, value gjson.Result) bool {
 		if key.Type != gjson.String {
@@ -1391,9 +1424,10 @@ func (a *MapBearerTokenAliasExample) unmarshalGJSON(value gjson.Result, strict b
 		mapKey = bearertoken.Token(key.Str)
 		var mapVal bool
 		mapVal = value.Bool()
-		obj[mapKey] = mapVal
+		objectValue[mapKey] = mapVal
 		return err == nil
 	})
+	*a = MapBearerTokenAliasExample(objectValue)
 	return err
 }
 
@@ -1455,14 +1489,15 @@ func (a *MapBinaryAliasExample) UnmarshalYAML(unmarshal func(interface{}) error)
 }
 
 func (a *MapBinaryAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make(map[binary.Binary]bool, 0)
 	var err error
+	var objectValue map[binary.Binary]bool
+	objectValue = make(map[binary.Binary]bool, 0)
 	if !value.IsObject() {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	if obj == nil {
-		obj = make(map[binary.Binary]bool, 0)
+	if objectValue == nil {
+		objectValue = make(map[binary.Binary]bool, 0)
 	}
 	value.ForEach(func(key, value gjson.Result) bool {
 		if key.Type != gjson.String {
@@ -1477,9 +1512,10 @@ func (a *MapBinaryAliasExample) unmarshalGJSON(value gjson.Result, strict bool) 
 		mapKey = binary.Binary(key.Str)
 		var mapVal bool
 		mapVal = value.Bool()
-		obj[mapKey] = mapVal
+		objectValue[mapKey] = mapVal
 		return err == nil
 	})
+	*a = MapBinaryAliasExample(objectValue)
 	return err
 }
 
@@ -1541,17 +1577,18 @@ func (a *MapBooleanAliasExample) UnmarshalYAML(unmarshal func(interface{}) error
 }
 
 func (a *MapBooleanAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make(map[boolean.Boolean]bool, 0)
 	var err error
+	var objectValue map[boolean.Boolean]bool
+	objectValue = make(map[boolean.Boolean]bool, 0)
 	if !value.IsObject() {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	if obj == nil {
-		obj = make(map[boolean.Boolean]bool, 0)
+	if objectValue == nil {
+		objectValue = make(map[boolean.Boolean]bool, 0)
 	}
 	value.ForEach(func(key, value gjson.Result) bool {
-		if key.Type != gjson.False && key.Type != gjson.True {
+		if key.Type != gjson.String {
 			err = errors.NewInvalidArgument()
 			return false
 		}
@@ -1563,9 +1600,10 @@ func (a *MapBooleanAliasExample) unmarshalGJSON(value gjson.Result, strict bool)
 		mapKey = boolean.Boolean(key.Bool())
 		var mapVal bool
 		mapVal = value.Bool()
-		obj[mapKey] = mapVal
+		objectValue[mapKey] = mapVal
 		return err == nil
 	})
+	*a = MapBooleanAliasExample(objectValue)
 	return err
 }
 
@@ -1627,14 +1665,15 @@ func (a *MapDateTimeAliasExample) UnmarshalYAML(unmarshal func(interface{}) erro
 }
 
 func (a *MapDateTimeAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make(map[datetime.DateTime]bool, 0)
 	var err error
+	var objectValue map[datetime.DateTime]bool
+	objectValue = make(map[datetime.DateTime]bool, 0)
 	if !value.IsObject() {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	if obj == nil {
-		obj = make(map[datetime.DateTime]bool, 0)
+	if objectValue == nil {
+		objectValue = make(map[datetime.DateTime]bool, 0)
 	}
 	value.ForEach(func(key, value gjson.Result) bool {
 		if key.Type != gjson.String {
@@ -1649,9 +1688,10 @@ func (a *MapDateTimeAliasExample) unmarshalGJSON(value gjson.Result, strict bool
 		mapKey, err = datetime.ParseDateTime(key.Str)
 		var mapVal bool
 		mapVal = value.Bool()
-		obj[mapKey] = mapVal
+		objectValue[mapKey] = mapVal
 		return err == nil
 	})
+	*a = MapDateTimeAliasExample(objectValue)
 	return err
 }
 
@@ -1713,14 +1753,15 @@ func (a *MapDoubleAliasExample) UnmarshalYAML(unmarshal func(interface{}) error)
 }
 
 func (a *MapDoubleAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make(map[float64]bool, 0)
 	var err error
+	var objectValue map[float64]bool
+	objectValue = make(map[float64]bool, 0)
 	if !value.IsObject() {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	if obj == nil {
-		obj = make(map[float64]bool, 0)
+	if objectValue == nil {
+		objectValue = make(map[float64]bool, 0)
 	}
 	value.ForEach(func(key, value gjson.Result) bool {
 		if key.Type != gjson.Number {
@@ -1752,9 +1793,10 @@ func (a *MapDoubleAliasExample) unmarshalGJSON(value gjson.Result, strict bool) 
 		mapKey = key.Num
 		var mapVal bool
 		mapVal = value.Bool()
-		obj[mapKey] = mapVal
+		objectValue[mapKey] = mapVal
 		return err == nil
 	})
+	*a = MapDoubleAliasExample(objectValue)
 	return err
 }
 
@@ -1804,14 +1846,15 @@ func (a *MapEnumExampleAlias) UnmarshalYAML(unmarshal func(interface{}) error) e
 }
 
 func (a *MapEnumExampleAlias) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make(map[EnumExample]string, 0)
 	var err error
+	var objectValue map[EnumExample]string
+	objectValue = make(map[EnumExample]string, 0)
 	if !value.IsObject() {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	if obj == nil {
-		obj = make(map[EnumExample]string, 0)
+	if objectValue == nil {
+		objectValue = make(map[EnumExample]string, 0)
 	}
 	value.ForEach(func(key, value gjson.Result) bool {
 		if key.Type != gjson.String {
@@ -1826,9 +1869,10 @@ func (a *MapEnumExampleAlias) unmarshalGJSON(value gjson.Result, strict bool) er
 		err = mapKey.UnmarshalText([]byte(key.Str))
 		var mapVal string
 		mapVal = value.Str
-		obj[mapKey] = mapVal
+		objectValue[mapKey] = mapVal
 		return err == nil
 	})
+	*a = MapEnumExampleAlias(objectValue)
 	return err
 }
 
@@ -1890,14 +1934,15 @@ func (a *MapIntegerAliasExample) UnmarshalYAML(unmarshal func(interface{}) error
 }
 
 func (a *MapIntegerAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make(map[int]bool, 0)
 	var err error
+	var objectValue map[int]bool
+	objectValue = make(map[int]bool, 0)
 	if !value.IsObject() {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	if obj == nil {
-		obj = make(map[int]bool, 0)
+	if objectValue == nil {
+		objectValue = make(map[int]bool, 0)
 	}
 	value.ForEach(func(key, value gjson.Result) bool {
 		if key.Type != gjson.Number {
@@ -1912,9 +1957,10 @@ func (a *MapIntegerAliasExample) unmarshalGJSON(value gjson.Result, strict bool)
 		mapKey = int(key.Int())
 		var mapVal bool
 		mapVal = value.Bool()
-		obj[mapKey] = mapVal
+		objectValue[mapKey] = mapVal
 		return err == nil
 	})
+	*a = MapIntegerAliasExample(objectValue)
 	return err
 }
 
@@ -1964,14 +2010,15 @@ func (a *MapRidAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) er
 }
 
 func (a *MapRidAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make(map[rid.ResourceIdentifier]bool, 0)
 	var err error
+	var objectValue map[rid.ResourceIdentifier]bool
+	objectValue = make(map[rid.ResourceIdentifier]bool, 0)
 	if !value.IsObject() {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	if obj == nil {
-		obj = make(map[rid.ResourceIdentifier]bool, 0)
+	if objectValue == nil {
+		objectValue = make(map[rid.ResourceIdentifier]bool, 0)
 	}
 	value.ForEach(func(key, value gjson.Result) bool {
 		if key.Type != gjson.String {
@@ -1986,9 +2033,10 @@ func (a *MapRidAliasExample) unmarshalGJSON(value gjson.Result, strict bool) err
 		mapKey, err = rid.ParseRID(key.Str)
 		var mapVal bool
 		mapVal = value.Bool()
-		obj[mapKey] = mapVal
+		objectValue[mapKey] = mapVal
 		return err == nil
 	})
+	*a = MapRidAliasExample(objectValue)
 	return err
 }
 
@@ -2050,14 +2098,15 @@ func (a *MapSafeLongAliasExample) UnmarshalYAML(unmarshal func(interface{}) erro
 }
 
 func (a *MapSafeLongAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make(map[safelong.SafeLong]bool, 0)
 	var err error
+	var objectValue map[safelong.SafeLong]bool
+	objectValue = make(map[safelong.SafeLong]bool, 0)
 	if !value.IsObject() {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	if obj == nil {
-		obj = make(map[safelong.SafeLong]bool, 0)
+	if objectValue == nil {
+		objectValue = make(map[safelong.SafeLong]bool, 0)
 	}
 	value.ForEach(func(key, value gjson.Result) bool {
 		if key.Type != gjson.Number {
@@ -2072,9 +2121,10 @@ func (a *MapSafeLongAliasExample) unmarshalGJSON(value gjson.Result, strict bool
 		mapKey, err = safelong.NewSafeLong(key.Int())
 		var mapVal bool
 		mapVal = value.Bool()
-		obj[mapKey] = mapVal
+		objectValue[mapKey] = mapVal
 		return err == nil
 	})
+	*a = MapSafeLongAliasExample(objectValue)
 	return err
 }
 
@@ -2136,14 +2186,15 @@ func (a *MapStringAliasExample) UnmarshalYAML(unmarshal func(interface{}) error)
 }
 
 func (a *MapStringAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make(map[string]bool, 0)
 	var err error
+	var objectValue map[string]bool
+	objectValue = make(map[string]bool, 0)
 	if !value.IsObject() {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	if obj == nil {
-		obj = make(map[string]bool, 0)
+	if objectValue == nil {
+		objectValue = make(map[string]bool, 0)
 	}
 	value.ForEach(func(key, value gjson.Result) bool {
 		if key.Type != gjson.String {
@@ -2158,9 +2209,10 @@ func (a *MapStringAliasExample) unmarshalGJSON(value gjson.Result, strict bool) 
 		mapKey = key.Str
 		var mapVal bool
 		mapVal = value.Bool()
-		obj[mapKey] = mapVal
+		objectValue[mapKey] = mapVal
 		return err == nil
 	})
+	*a = MapStringAliasExample(objectValue)
 	return err
 }
 
@@ -2210,14 +2262,15 @@ func (a *MapUuidAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) e
 }
 
 func (a *MapUuidAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make(map[uuid.UUID]bool, 0)
 	var err error
+	var objectValue map[uuid.UUID]bool
+	objectValue = make(map[uuid.UUID]bool, 0)
 	if !value.IsObject() {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	if obj == nil {
-		obj = make(map[uuid.UUID]bool, 0)
+	if objectValue == nil {
+		objectValue = make(map[uuid.UUID]bool, 0)
 	}
 	value.ForEach(func(key, value gjson.Result) bool {
 		if key.Type != gjson.String {
@@ -2232,9 +2285,10 @@ func (a *MapUuidAliasExample) unmarshalGJSON(value gjson.Result, strict bool) er
 		mapKey, err = uuid.ParseUUID(key.Str)
 		var mapVal bool
 		mapVal = value.Bool()
-		obj[mapKey] = mapVal
+		objectValue[mapKey] = mapVal
 		return err == nil
 	})
+	*a = MapUuidAliasExample(objectValue)
 	return err
 }
 
@@ -2298,7 +2352,6 @@ func (a *OptionalAnyAliasExample) UnmarshalYAML(unmarshal func(interface{}) erro
 }
 
 func (a *OptionalAnyAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj *interface{}
 	var err error
 	if value.Type != gjson.Null {
 		if value.Type != gjson.JSON && value.Type != gjson.String && value.Type != gjson.Number && value.Type != gjson.True && value.Type != gjson.False {
@@ -2307,7 +2360,7 @@ func (a *OptionalAnyAliasExample) unmarshalGJSON(value gjson.Result, strict bool
 		}
 		var optionalValue interface{}
 		optionalValue = value.Value()
-		obj = &optionalValue
+		a.Value = &optionalValue
 	}
 	return err
 }
@@ -2375,7 +2428,6 @@ func (a *OptionalBearerTokenAliasExample) UnmarshalYAML(unmarshal func(interface
 }
 
 func (a *OptionalBearerTokenAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj *bearertoken.Token
 	var err error
 	if value.Type != gjson.Null {
 		if value.Type != gjson.String {
@@ -2384,7 +2436,7 @@ func (a *OptionalBearerTokenAliasExample) unmarshalGJSON(value gjson.Result, str
 		}
 		var optionalValue bearertoken.Token
 		optionalValue = bearertoken.Token(value.Str)
-		obj = &optionalValue
+		a.Value = &optionalValue
 	}
 	return err
 }
@@ -2459,7 +2511,6 @@ func (a *OptionalBooleanAliasExample) UnmarshalYAML(unmarshal func(interface{}) 
 }
 
 func (a *OptionalBooleanAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj *bool
 	var err error
 	if value.Type != gjson.Null {
 		if value.Type != gjson.False && value.Type != gjson.True {
@@ -2468,7 +2519,7 @@ func (a *OptionalBooleanAliasExample) unmarshalGJSON(value gjson.Result, strict 
 		}
 		var optionalValue bool
 		optionalValue = value.Bool()
-		obj = &optionalValue
+		a.Value = &optionalValue
 	}
 	return err
 }
@@ -2536,7 +2587,6 @@ func (a *OptionalDateTimeAliasExample) UnmarshalYAML(unmarshal func(interface{})
 }
 
 func (a *OptionalDateTimeAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj *datetime.DateTime
 	var err error
 	if value.Type != gjson.Null {
 		if value.Type != gjson.String {
@@ -2545,7 +2595,7 @@ func (a *OptionalDateTimeAliasExample) unmarshalGJSON(value gjson.Result, strict
 		}
 		var optionalValue datetime.DateTime
 		optionalValue, err = datetime.ParseDateTime(value.Str)
-		obj = &optionalValue
+		a.Value = &optionalValue
 	}
 	return err
 }
@@ -2620,7 +2670,6 @@ func (a *OptionalDoubleAliasExample) UnmarshalYAML(unmarshal func(interface{}) e
 }
 
 func (a *OptionalDoubleAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj *float64
 	var err error
 	if value.Type != gjson.Null {
 		if value.Type != gjson.Number {
@@ -2646,7 +2695,7 @@ func (a *OptionalDoubleAliasExample) unmarshalGJSON(value gjson.Result, strict b
 			err = errors.NewInvalidArgument()
 		}
 		optionalValue = value.Num
-		obj = &optionalValue
+		a.Value = &optionalValue
 	}
 	return err
 }
@@ -2714,7 +2763,6 @@ func (a *OptionalIntegerAliasExample) UnmarshalYAML(unmarshal func(interface{}) 
 }
 
 func (a *OptionalIntegerAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj *int
 	var err error
 	if value.Type != gjson.Null {
 		if value.Type != gjson.Number {
@@ -2723,7 +2771,7 @@ func (a *OptionalIntegerAliasExample) unmarshalGJSON(value gjson.Result, strict 
 		}
 		var optionalValue int
 		optionalValue = int(value.Int())
-		obj = &optionalValue
+		a.Value = &optionalValue
 	}
 	return err
 }
@@ -2791,7 +2839,6 @@ func (a *OptionalRidAliasExample) UnmarshalYAML(unmarshal func(interface{}) erro
 }
 
 func (a *OptionalRidAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj *rid.ResourceIdentifier
 	var err error
 	if value.Type != gjson.Null {
 		if value.Type != gjson.String {
@@ -2800,7 +2847,7 @@ func (a *OptionalRidAliasExample) unmarshalGJSON(value gjson.Result, strict bool
 		}
 		var optionalValue rid.ResourceIdentifier
 		optionalValue, err = rid.ParseRID(value.Str)
-		obj = &optionalValue
+		a.Value = &optionalValue
 	}
 	return err
 }
@@ -2875,7 +2922,6 @@ func (a *OptionalSafeLongAliasExample) UnmarshalYAML(unmarshal func(interface{})
 }
 
 func (a *OptionalSafeLongAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj *safelong.SafeLong
 	var err error
 	if value.Type != gjson.Null {
 		if value.Type != gjson.Number {
@@ -2884,7 +2930,7 @@ func (a *OptionalSafeLongAliasExample) unmarshalGJSON(value gjson.Result, strict
 		}
 		var optionalValue safelong.SafeLong
 		optionalValue, err = safelong.NewSafeLong(value.Int())
-		obj = &optionalValue
+		a.Value = &optionalValue
 	}
 	return err
 }
@@ -2952,7 +2998,6 @@ func (a *OptionalStringAliasExample) UnmarshalYAML(unmarshal func(interface{}) e
 }
 
 func (a *OptionalStringAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj *string
 	var err error
 	if value.Type != gjson.Null {
 		if value.Type != gjson.String {
@@ -2961,7 +3006,7 @@ func (a *OptionalStringAliasExample) unmarshalGJSON(value gjson.Result, strict b
 		}
 		var optionalValue string
 		optionalValue = value.Str
-		obj = &optionalValue
+		a.Value = &optionalValue
 	}
 	return err
 }
@@ -3035,7 +3080,6 @@ func (a *OptionalUuidAliasExample) UnmarshalYAML(unmarshal func(interface{}) err
 }
 
 func (a *OptionalUuidAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj *uuid.UUID
 	var err error
 	if value.Type != gjson.Null {
 		if value.Type != gjson.String {
@@ -3044,7 +3088,7 @@ func (a *OptionalUuidAliasExample) unmarshalGJSON(value gjson.Result, strict boo
 		}
 		var optionalValue uuid.UUID
 		optionalValue, err = uuid.ParseUUID(value.Str)
-		obj = &optionalValue
+		a.Value = &optionalValue
 	}
 	return err
 }
@@ -3119,7 +3163,6 @@ func (a *RawOptionalExample) UnmarshalYAML(unmarshal func(interface{}) error) er
 }
 
 func (a *RawOptionalExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj *int
 	var err error
 	if value.Type != gjson.Null {
 		if value.Type != gjson.Number {
@@ -3128,7 +3171,7 @@ func (a *RawOptionalExample) unmarshalGJSON(value gjson.Result, strict bool) err
 		}
 		var optionalValue int
 		optionalValue = int(value.Int())
-		obj = &optionalValue
+		a.Value = &optionalValue
 	}
 	return err
 }
@@ -3194,13 +3237,14 @@ func (a *ReferenceAliasExample) UnmarshalYAML(unmarshal func(interface{}) error)
 }
 
 func (a *ReferenceAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj AnyExample
 	var err error
+	var objectValue AnyExample
 	if strict {
-		err = obj.UnmarshalJSONStringStrict(value.Raw)
+		err = objectValue.UnmarshalJSONStringStrict(value.Raw)
 	} else {
-		err = obj.UnmarshalJSONString(value.Raw)
+		err = objectValue.UnmarshalJSONString(value.Raw)
 	}
+	*a = ReferenceAliasExample(objectValue)
 	return err
 }
 
@@ -3262,13 +3306,14 @@ func (a *RidAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) error
 }
 
 func (a *RidAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj rid.ResourceIdentifier
 	var err error
+	var objectValue rid.ResourceIdentifier
 	if value.Type != gjson.String {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	obj, err = rid.ParseRID(value.Str)
+	objectValue, err = rid.ParseRID(value.Str)
+	*a = RidAliasExample(objectValue)
 	return err
 }
 
@@ -3335,13 +3380,14 @@ func (a *SafeLongAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) 
 }
 
 func (a *SafeLongAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj safelong.SafeLong
 	var err error
+	var objectValue safelong.SafeLong
 	if value.Type != gjson.Number {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	obj, err = safelong.NewSafeLong(value.Int())
+	objectValue, err = safelong.NewSafeLong(value.Int())
+	*a = SafeLongAliasExample(objectValue)
 	return err
 }
 
@@ -3403,8 +3449,9 @@ func (a *SetAnyAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) er
 }
 
 func (a *SetAnyAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]interface{}, 0)
 	var err error
+	var objectValue []interface{}
+	objectValue = make([]interface{}, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -3416,9 +3463,10 @@ func (a *SetAnyAliasExample) unmarshalGJSON(value gjson.Result, strict bool) err
 		}
 		var listElement interface{}
 		listElement = value.Value()
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = SetAnyAliasExample(objectValue)
 	return err
 }
 
@@ -3468,8 +3516,9 @@ func (a *SetBearerTokenAliasExample) UnmarshalYAML(unmarshal func(interface{}) e
 }
 
 func (a *SetBearerTokenAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]bearertoken.Token, 0)
 	var err error
+	var objectValue []bearertoken.Token
+	objectValue = make([]bearertoken.Token, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -3481,9 +3530,10 @@ func (a *SetBearerTokenAliasExample) unmarshalGJSON(value gjson.Result, strict b
 		}
 		var listElement bearertoken.Token
 		listElement = bearertoken.Token(value.Str)
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = SetBearerTokenAliasExample(objectValue)
 	return err
 }
 
@@ -3545,8 +3595,9 @@ func (a *SetBinaryAliasExample) UnmarshalYAML(unmarshal func(interface{}) error)
 }
 
 func (a *SetBinaryAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([][]byte, 0)
 	var err error
+	var objectValue [][]byte
+	objectValue = make([][]byte, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -3558,9 +3609,10 @@ func (a *SetBinaryAliasExample) unmarshalGJSON(value gjson.Result, strict bool) 
 		}
 		var listElement []byte
 		listElement, err = binary.Binary(value.Str).Bytes()
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = SetBinaryAliasExample(objectValue)
 	return err
 }
 
@@ -3610,8 +3662,9 @@ func (a *SetBooleanAliasExample) UnmarshalYAML(unmarshal func(interface{}) error
 }
 
 func (a *SetBooleanAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]bool, 0)
 	var err error
+	var objectValue []bool
+	objectValue = make([]bool, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -3623,9 +3676,10 @@ func (a *SetBooleanAliasExample) unmarshalGJSON(value gjson.Result, strict bool)
 		}
 		var listElement bool
 		listElement = value.Bool()
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = SetBooleanAliasExample(objectValue)
 	return err
 }
 
@@ -3675,8 +3729,9 @@ func (a *SetDateTimeAliasExample) UnmarshalYAML(unmarshal func(interface{}) erro
 }
 
 func (a *SetDateTimeAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]datetime.DateTime, 0)
 	var err error
+	var objectValue []datetime.DateTime
+	objectValue = make([]datetime.DateTime, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -3688,9 +3743,10 @@ func (a *SetDateTimeAliasExample) unmarshalGJSON(value gjson.Result, strict bool
 		}
 		var listElement datetime.DateTime
 		listElement, err = datetime.ParseDateTime(value.Str)
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = SetDateTimeAliasExample(objectValue)
 	return err
 }
 
@@ -3752,8 +3808,9 @@ func (a *SetDoubleAliasExample) UnmarshalYAML(unmarshal func(interface{}) error)
 }
 
 func (a *SetDoubleAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]float64, 0)
 	var err error
+	var objectValue []float64
+	objectValue = make([]float64, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -3782,9 +3839,10 @@ func (a *SetDoubleAliasExample) unmarshalGJSON(value gjson.Result, strict bool) 
 			err = errors.NewInvalidArgument()
 		}
 		listElement = value.Num
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = SetDoubleAliasExample(objectValue)
 	return err
 }
 
@@ -3834,8 +3892,9 @@ func (a *SetIntegerAliasExample) UnmarshalYAML(unmarshal func(interface{}) error
 }
 
 func (a *SetIntegerAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]int, 0)
 	var err error
+	var objectValue []int
+	objectValue = make([]int, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -3847,9 +3906,10 @@ func (a *SetIntegerAliasExample) unmarshalGJSON(value gjson.Result, strict bool)
 		}
 		var listElement int
 		listElement = int(value.Int())
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = SetIntegerAliasExample(objectValue)
 	return err
 }
 
@@ -3899,8 +3959,9 @@ func (a *SetOptionalAnyAliasExample) UnmarshalYAML(unmarshal func(interface{}) e
 }
 
 func (a *SetOptionalAnyAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]*interface{}, 0)
 	var err error
+	var objectValue []*interface{}
+	objectValue = make([]*interface{}, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -3916,9 +3977,10 @@ func (a *SetOptionalAnyAliasExample) unmarshalGJSON(value gjson.Result, strict b
 			optionalValue1 = value.Value()
 			listElement = &optionalValue1
 		}
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = SetOptionalAnyAliasExample(objectValue)
 	return err
 }
 
@@ -3968,8 +4030,9 @@ func (a *SetRidAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) er
 }
 
 func (a *SetRidAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]rid.ResourceIdentifier, 0)
 	var err error
+	var objectValue []rid.ResourceIdentifier
+	objectValue = make([]rid.ResourceIdentifier, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -3981,9 +4044,10 @@ func (a *SetRidAliasExample) unmarshalGJSON(value gjson.Result, strict bool) err
 		}
 		var listElement rid.ResourceIdentifier
 		listElement, err = rid.ParseRID(value.Str)
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = SetRidAliasExample(objectValue)
 	return err
 }
 
@@ -4045,8 +4109,9 @@ func (a *SetSafeLongAliasExample) UnmarshalYAML(unmarshal func(interface{}) erro
 }
 
 func (a *SetSafeLongAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]safelong.SafeLong, 0)
 	var err error
+	var objectValue []safelong.SafeLong
+	objectValue = make([]safelong.SafeLong, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -4058,9 +4123,10 @@ func (a *SetSafeLongAliasExample) unmarshalGJSON(value gjson.Result, strict bool
 		}
 		var listElement safelong.SafeLong
 		listElement, err = safelong.NewSafeLong(value.Int())
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = SetSafeLongAliasExample(objectValue)
 	return err
 }
 
@@ -4122,8 +4188,9 @@ func (a *SetStringAliasExample) UnmarshalYAML(unmarshal func(interface{}) error)
 }
 
 func (a *SetStringAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]string, 0)
 	var err error
+	var objectValue []string
+	objectValue = make([]string, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -4135,9 +4202,10 @@ func (a *SetStringAliasExample) unmarshalGJSON(value gjson.Result, strict bool) 
 		}
 		var listElement string
 		listElement = value.Str
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = SetStringAliasExample(objectValue)
 	return err
 }
 
@@ -4187,8 +4255,9 @@ func (a *SetUuidAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) e
 }
 
 func (a *SetUuidAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	obj := make([]uuid.UUID, 0)
 	var err error
+	var objectValue []uuid.UUID
+	objectValue = make([]uuid.UUID, 0)
 	if !value.IsArray() {
 		err = errors.NewInvalidArgument()
 		return err
@@ -4200,9 +4269,10 @@ func (a *SetUuidAliasExample) unmarshalGJSON(value gjson.Result, strict bool) er
 		}
 		var listElement uuid.UUID
 		listElement, err = uuid.ParseUUID(value.Str)
-		obj = append(obj, listElement)
+		objectValue = append(objectValue, listElement)
 		return err == nil
 	})
+	*a = SetUuidAliasExample(objectValue)
 	return err
 }
 
@@ -4264,13 +4334,14 @@ func (a *StringAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) er
 }
 
 func (a *StringAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj string
 	var err error
+	var objectValue string
 	if value.Type != gjson.String {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	obj = value.Str
+	objectValue = value.Str
+	*a = StringAliasExample(objectValue)
 	return err
 }
 
@@ -4320,13 +4391,14 @@ func (a *UuidAliasExample) UnmarshalYAML(unmarshal func(interface{}) error) erro
 }
 
 func (a *UuidAliasExample) unmarshalGJSON(value gjson.Result, strict bool) error {
-	var obj uuid.UUID
 	var err error
+	var objectValue uuid.UUID
 	if value.Type != gjson.String {
 		err = errors.NewInvalidArgument()
 		return err
 	}
-	obj, err = uuid.ParseUUID(value.Str)
+	objectValue, err = uuid.ParseUUID(value.Str)
+	*a = UuidAliasExample(objectValue)
 	return err
 }
 

@@ -2,17 +2,411 @@
 
 package spec
 
+import (
+	"github.com/palantir/conjure-go-runtime/v2/conjure-go-contract/errors"
+	"github.com/palantir/pkg/safeyaml"
+	"github.com/tidwall/gjson"
+)
+
 // Must be in lowerCamelCase. Numbers are permitted, but not at the beginning of a word. Allowed argument names: "fooBar", "build2Request". Disallowed names: "FooBar", "2BuildRequest".
 type ArgumentName string
+
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
+func (a *ArgumentName) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
+func (a *ArgumentName) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (a *ArgumentName) UnmarshalJSONStrict(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (a *ArgumentName) UnmarshalJSONStringStrict(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (a *ArgumentName) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (a *ArgumentName) unmarshalGJSON(value gjson.Result, strict bool) error {
+	var err error
+	var objectValue string
+	if value.Type != gjson.String {
+		err = errors.NewInvalidArgument()
+		return err
+	}
+	objectValue = value.Str
+	*a = ArgumentName(objectValue)
+	return err
+}
+
 type Documentation string
+
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
+func (a *Documentation) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
+func (a *Documentation) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (a *Documentation) UnmarshalJSONStrict(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (a *Documentation) UnmarshalJSONStringStrict(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (a *Documentation) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (a *Documentation) unmarshalGJSON(value gjson.Result, strict bool) error {
+	var err error
+	var objectValue string
+	if value.Type != gjson.String {
+		err = errors.NewInvalidArgument()
+		return err
+	}
+	objectValue = value.Str
+	*a = Documentation(objectValue)
+	return err
+}
 
 // Should be in lowerCamelCase.
 type EndpointName string
+
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
+func (a *EndpointName) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
+func (a *EndpointName) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (a *EndpointName) UnmarshalJSONStrict(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (a *EndpointName) UnmarshalJSONStringStrict(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (a *EndpointName) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (a *EndpointName) unmarshalGJSON(value gjson.Result, strict bool) error {
+	var err error
+	var objectValue string
+	if value.Type != gjson.String {
+		err = errors.NewInvalidArgument()
+		return err
+	}
+	objectValue = value.Str
+	*a = EndpointName(objectValue)
+	return err
+}
+
 type ErrorNamespace string
+
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
+func (a *ErrorNamespace) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
+func (a *ErrorNamespace) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (a *ErrorNamespace) UnmarshalJSONStrict(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (a *ErrorNamespace) UnmarshalJSONStringStrict(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (a *ErrorNamespace) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (a *ErrorNamespace) unmarshalGJSON(value gjson.Result, strict bool) error {
+	var err error
+	var objectValue string
+	if value.Type != gjson.String {
+		err = errors.NewInvalidArgument()
+		return err
+	}
+	objectValue = value.Str
+	*a = ErrorNamespace(objectValue)
+	return err
+}
 
 // Should be in lowerCamelCase, but kebab-case and snake_case are also permitted.
 type FieldName string
+
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
+func (a *FieldName) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
+func (a *FieldName) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (a *FieldName) UnmarshalJSONStrict(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (a *FieldName) UnmarshalJSONStringStrict(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (a *FieldName) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (a *FieldName) unmarshalGJSON(value gjson.Result, strict bool) error {
+	var err error
+	var objectValue string
+	if value.Type != gjson.String {
+		err = errors.NewInvalidArgument()
+		return err
+	}
+	objectValue = value.Str
+	*a = FieldName(objectValue)
+	return err
+}
+
 type HttpPath string
+
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
+func (a *HttpPath) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
+func (a *HttpPath) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (a *HttpPath) UnmarshalJSONStrict(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (a *HttpPath) UnmarshalJSONStringStrict(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (a *HttpPath) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (a *HttpPath) unmarshalGJSON(value gjson.Result, strict bool) error {
+	var err error
+	var objectValue string
+	if value.Type != gjson.String {
+		err = errors.NewInvalidArgument()
+		return err
+	}
+	objectValue = value.Str
+	*a = HttpPath(objectValue)
+	return err
+}
 
 // For header parameters, the parameter id must be in Upper-Kebab-Case. For query parameters, the parameter id must be in lowerCamelCase. Numbers are permitted, but not at the beginning of a word.
 type ParameterId string
+
+// UnmarshalJSON deserializes data, ignoring unrecognized keys.
+// Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
+func (a *ParameterId) UnmarshalJSON(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+// UnmarshalJSONString deserializes data, ignoring unrecognized keys.
+func (a *ParameterId) UnmarshalJSONString(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), false)
+}
+
+// UnmarshalJSONStrict deserializes data, rejecting unrecognized keys.
+// Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
+func (a *ParameterId) UnmarshalJSONStrict(data []byte) error {
+	if !gjson.ValidBytes(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), true)
+}
+
+// UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
+func (a *ParameterId) UnmarshalJSONStringStrict(data string) error {
+	if !gjson.Valid(data) {
+		return errors.NewInvalidArgument()
+	}
+	return a.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (a *ParameterId) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return a.unmarshalGJSON(gjson.ParseBytes(data), false)
+}
+
+func (a *ParameterId) unmarshalGJSON(value gjson.Result, strict bool) error {
+	var err error
+	var objectValue string
+	if value.Type != gjson.String {
+		err = errors.NewInvalidArgument()
+		return err
+	}
+	objectValue = value.Str
+	*a = ParameterId(objectValue)
+	return err
+}

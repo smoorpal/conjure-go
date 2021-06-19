@@ -23,6 +23,14 @@ func (o AliasDefinition) MarshalJSON() ([]byte, error) {
 	return safejson.Marshal(AliasDefinitionAlias(o))
 }
 
+func (o AliasDefinition) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
+}
+
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *AliasDefinition) UnmarshalJSON(data []byte) error {
@@ -55,6 +63,15 @@ func (o *AliasDefinition) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *AliasDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *AliasDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -120,22 +137,6 @@ func (o *AliasDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 	return nil
 }
 
-func (o AliasDefinition) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *AliasDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type ArgumentDefinition struct {
 	ArgName   ArgumentName   `json:"argName"`
 	Type      Type           `json:"type"`
@@ -154,6 +155,14 @@ func (o ArgumentDefinition) MarshalJSON() ([]byte, error) {
 	}
 	type ArgumentDefinitionAlias ArgumentDefinition
 	return safejson.Marshal(ArgumentDefinitionAlias(o))
+}
+
+func (o ArgumentDefinition) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -188,6 +197,15 @@ func (o *ArgumentDefinition) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *ArgumentDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *ArgumentDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -296,22 +314,6 @@ func (o *ArgumentDefinition) unmarshalGJSON(value gjson.Result, strict bool) err
 	return nil
 }
 
-func (o ArgumentDefinition) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *ArgumentDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type BodyParameterType struct {
 }
 
@@ -338,6 +340,14 @@ func (o ConjureDefinition) MarshalJSON() ([]byte, error) {
 	}
 	type ConjureDefinitionAlias ConjureDefinition
 	return safejson.Marshal(ConjureDefinitionAlias(o))
+}
+
+func (o ConjureDefinition) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -372,6 +382,15 @@ func (o *ConjureDefinition) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *ConjureDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *ConjureDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -489,22 +508,6 @@ func (o *ConjureDefinition) unmarshalGJSON(value gjson.Result, strict bool) erro
 	return nil
 }
 
-func (o ConjureDefinition) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *ConjureDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type CookieAuthType struct {
 	CookieName string `json:"cookieName"`
 }
@@ -512,6 +515,14 @@ type CookieAuthType struct {
 func (o CookieAuthType) MarshalJSON() ([]byte, error) {
 	type CookieAuthTypeAlias CookieAuthType
 	return safejson.Marshal(CookieAuthTypeAlias(o))
+}
+
+func (o CookieAuthType) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -546,6 +557,15 @@ func (o *CookieAuthType) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *CookieAuthType) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *CookieAuthType) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -590,22 +610,6 @@ func (o *CookieAuthType) unmarshalGJSON(value gjson.Result, strict bool) error {
 	return nil
 }
 
-func (o CookieAuthType) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *CookieAuthType) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type EndpointDefinition struct {
 	EndpointName EndpointName         `json:"endpointName"`
 	HttpMethod   HttpMethod           `json:"httpMethod"`
@@ -631,6 +635,14 @@ func (o EndpointDefinition) MarshalJSON() ([]byte, error) {
 	}
 	type EndpointDefinitionAlias EndpointDefinition
 	return safejson.Marshal(EndpointDefinitionAlias(o))
+}
+
+func (o EndpointDefinition) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -665,6 +677,15 @@ func (o *EndpointDefinition) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *EndpointDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *EndpointDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -819,22 +840,6 @@ func (o *EndpointDefinition) unmarshalGJSON(value gjson.Result, strict bool) err
 	return nil
 }
 
-func (o EndpointDefinition) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *EndpointDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type EnumDefinition struct {
 	TypeName TypeName              `json:"typeName"`
 	Values   []EnumValueDefinition `json:"values"`
@@ -847,6 +852,14 @@ func (o EnumDefinition) MarshalJSON() ([]byte, error) {
 	}
 	type EnumDefinitionAlias EnumDefinition
 	return safejson.Marshal(EnumDefinitionAlias(o))
+}
+
+func (o EnumDefinition) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -881,6 +894,15 @@ func (o *EnumDefinition) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *EnumDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *EnumDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -951,22 +973,6 @@ func (o *EnumDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
 	return nil
 }
 
-func (o EnumDefinition) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *EnumDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type EnumValueDefinition struct {
 	Value      string         `json:"value"`
 	Docs       *Documentation `json:"docs"`
@@ -976,6 +982,14 @@ type EnumValueDefinition struct {
 func (o EnumValueDefinition) MarshalJSON() ([]byte, error) {
 	type EnumValueDefinitionAlias EnumValueDefinition
 	return safejson.Marshal(EnumValueDefinitionAlias(o))
+}
+
+func (o EnumValueDefinition) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -1010,6 +1024,15 @@ func (o *EnumValueDefinition) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *EnumValueDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *EnumValueDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -1074,22 +1097,6 @@ func (o *EnumValueDefinition) unmarshalGJSON(value gjson.Result, strict bool) er
 	return nil
 }
 
-func (o EnumValueDefinition) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *EnumValueDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type ErrorDefinition struct {
 	ErrorName  TypeName          `json:"errorName"`
 	Docs       *Documentation    `json:"docs"`
@@ -1108,6 +1115,14 @@ func (o ErrorDefinition) MarshalJSON() ([]byte, error) {
 	}
 	type ErrorDefinitionAlias ErrorDefinition
 	return safejson.Marshal(ErrorDefinitionAlias(o))
+}
+
+func (o ErrorDefinition) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -1142,6 +1157,15 @@ func (o *ErrorDefinition) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *ErrorDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *ErrorDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -1250,22 +1274,6 @@ func (o *ErrorDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 	return nil
 }
 
-func (o ErrorDefinition) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *ErrorDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type ExternalReference struct {
 	// An identifier for a non-Conjure type which is already defined in a different language (e.g. Java).
 	ExternalReference TypeName `json:"externalReference"`
@@ -1276,6 +1284,14 @@ type ExternalReference struct {
 func (o ExternalReference) MarshalJSON() ([]byte, error) {
 	type ExternalReferenceAlias ExternalReference
 	return safejson.Marshal(ExternalReferenceAlias(o))
+}
+
+func (o ExternalReference) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -1310,6 +1326,15 @@ func (o *ExternalReference) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *ExternalReference) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *ExternalReference) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -1365,22 +1390,6 @@ func (o *ExternalReference) unmarshalGJSON(value gjson.Result, strict bool) erro
 	return nil
 }
 
-func (o ExternalReference) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *ExternalReference) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type FieldDefinition struct {
 	FieldName  FieldName      `json:"fieldName"`
 	Type       Type           `json:"type"`
@@ -1391,6 +1400,14 @@ type FieldDefinition struct {
 func (o FieldDefinition) MarshalJSON() ([]byte, error) {
 	type FieldDefinitionAlias FieldDefinition
 	return safejson.Marshal(FieldDefinitionAlias(o))
+}
+
+func (o FieldDefinition) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -1425,6 +1442,15 @@ func (o *FieldDefinition) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *FieldDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *FieldDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -1500,22 +1526,6 @@ func (o *FieldDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 	return nil
 }
 
-func (o FieldDefinition) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *FieldDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type HeaderAuthType struct {
 }
 
@@ -1526,6 +1536,14 @@ type HeaderParameterType struct {
 func (o HeaderParameterType) MarshalJSON() ([]byte, error) {
 	type HeaderParameterTypeAlias HeaderParameterType
 	return safejson.Marshal(HeaderParameterTypeAlias(o))
+}
+
+func (o HeaderParameterType) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -1560,6 +1578,15 @@ func (o *HeaderParameterType) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *HeaderParameterType) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *HeaderParameterType) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -1604,22 +1631,6 @@ func (o *HeaderParameterType) unmarshalGJSON(value gjson.Result, strict bool) er
 	return nil
 }
 
-func (o HeaderParameterType) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *HeaderParameterType) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type ListType struct {
 	ItemType Type `json:"itemType"`
 }
@@ -1627,6 +1638,14 @@ type ListType struct {
 func (o ListType) MarshalJSON() ([]byte, error) {
 	type ListTypeAlias ListType
 	return safejson.Marshal(ListTypeAlias(o))
+}
+
+func (o ListType) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -1661,6 +1680,15 @@ func (o *ListType) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *ListType) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *ListType) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -1705,22 +1733,6 @@ func (o *ListType) unmarshalGJSON(value gjson.Result, strict bool) error {
 	return nil
 }
 
-func (o ListType) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *ListType) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type MapType struct {
 	KeyType   Type `json:"keyType"`
 	ValueType Type `json:"valueType"`
@@ -1729,6 +1741,14 @@ type MapType struct {
 func (o MapType) MarshalJSON() ([]byte, error) {
 	type MapTypeAlias MapType
 	return safejson.Marshal(MapTypeAlias(o))
+}
+
+func (o MapType) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -1763,6 +1783,15 @@ func (o *MapType) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *MapType) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *MapType) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -1818,22 +1847,6 @@ func (o *MapType) unmarshalGJSON(value gjson.Result, strict bool) error {
 	return nil
 }
 
-func (o MapType) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *MapType) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type ObjectDefinition struct {
 	TypeName TypeName          `json:"typeName"`
 	Fields   []FieldDefinition `json:"fields"`
@@ -1846,6 +1859,14 @@ func (o ObjectDefinition) MarshalJSON() ([]byte, error) {
 	}
 	type ObjectDefinitionAlias ObjectDefinition
 	return safejson.Marshal(ObjectDefinitionAlias(o))
+}
+
+func (o ObjectDefinition) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -1880,6 +1901,15 @@ func (o *ObjectDefinition) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *ObjectDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *ObjectDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -1950,22 +1980,6 @@ func (o *ObjectDefinition) unmarshalGJSON(value gjson.Result, strict bool) error
 	return nil
 }
 
-func (o ObjectDefinition) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *ObjectDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type OptionalType struct {
 	ItemType Type `json:"itemType"`
 }
@@ -1973,6 +1987,14 @@ type OptionalType struct {
 func (o OptionalType) MarshalJSON() ([]byte, error) {
 	type OptionalTypeAlias OptionalType
 	return safejson.Marshal(OptionalTypeAlias(o))
+}
+
+func (o OptionalType) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -2007,6 +2029,15 @@ func (o *OptionalType) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *OptionalType) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *OptionalType) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -2051,22 +2082,6 @@ func (o *OptionalType) unmarshalGJSON(value gjson.Result, strict bool) error {
 	return nil
 }
 
-func (o OptionalType) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *OptionalType) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type PathParameterType struct {
 }
 
@@ -2077,6 +2092,14 @@ type QueryParameterType struct {
 func (o QueryParameterType) MarshalJSON() ([]byte, error) {
 	type QueryParameterTypeAlias QueryParameterType
 	return safejson.Marshal(QueryParameterTypeAlias(o))
+}
+
+func (o QueryParameterType) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -2111,6 +2134,15 @@ func (o *QueryParameterType) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *QueryParameterType) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *QueryParameterType) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -2155,22 +2187,6 @@ func (o *QueryParameterType) unmarshalGJSON(value gjson.Result, strict bool) err
 	return nil
 }
 
-func (o QueryParameterType) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *QueryParameterType) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type ServiceDefinition struct {
 	ServiceName TypeName             `json:"serviceName"`
 	Endpoints   []EndpointDefinition `json:"endpoints"`
@@ -2183,6 +2199,14 @@ func (o ServiceDefinition) MarshalJSON() ([]byte, error) {
 	}
 	type ServiceDefinitionAlias ServiceDefinition
 	return safejson.Marshal(ServiceDefinitionAlias(o))
+}
+
+func (o ServiceDefinition) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -2217,6 +2241,15 @@ func (o *ServiceDefinition) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *ServiceDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *ServiceDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -2287,22 +2320,6 @@ func (o *ServiceDefinition) unmarshalGJSON(value gjson.Result, strict bool) erro
 	return nil
 }
 
-func (o ServiceDefinition) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *ServiceDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type SetType struct {
 	ItemType Type `json:"itemType"`
 }
@@ -2310,6 +2327,14 @@ type SetType struct {
 func (o SetType) MarshalJSON() ([]byte, error) {
 	type SetTypeAlias SetType
 	return safejson.Marshal(SetTypeAlias(o))
+}
+
+func (o SetType) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -2344,6 +2369,15 @@ func (o *SetType) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *SetType) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *SetType) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -2388,22 +2422,6 @@ func (o *SetType) unmarshalGJSON(value gjson.Result, strict bool) error {
 	return nil
 }
 
-func (o SetType) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *SetType) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type TypeName struct {
 	// The name of the custom Conjure type or service. It must be in UpperCamelCase. Numbers are permitted, but not at the beginning of a word. Allowed names: "FooBar", "XYCoordinate", "Build2Request". Disallowed names: "fooBar", "2BuildRequest".
 	Name string `json:"name"`
@@ -2414,6 +2432,14 @@ type TypeName struct {
 func (o TypeName) MarshalJSON() ([]byte, error) {
 	type TypeNameAlias TypeName
 	return safejson.Marshal(TypeNameAlias(o))
+}
+
+func (o TypeName) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -2448,6 +2474,15 @@ func (o *TypeName) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *TypeName) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *TypeName) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -2503,22 +2538,6 @@ func (o *TypeName) unmarshalGJSON(value gjson.Result, strict bool) error {
 	return nil
 }
 
-func (o TypeName) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *TypeName) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
-}
-
 type UnionDefinition struct {
 	TypeName TypeName          `json:"typeName"`
 	Union    []FieldDefinition `json:"union"`
@@ -2531,6 +2550,14 @@ func (o UnionDefinition) MarshalJSON() ([]byte, error) {
 	}
 	type UnionDefinitionAlias UnionDefinition
 	return safejson.Marshal(UnionDefinitionAlias(o))
+}
+
+func (o UnionDefinition) MarshalYAML() (interface{}, error) {
+	jsonBytes, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
 }
 
 // UnmarshalJSON deserializes data, ignoring unrecognized keys.
@@ -2565,6 +2592,15 @@ func (o *UnionDefinition) UnmarshalJSONStringStrict(data string) error {
 		return errors.NewInvalidArgument()
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler. It converts the YAML to JSON, then runs UnmarshalJSON.
+func (o *UnionDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
+	if err != nil {
+		return errors.WrapWithInvalidArgument(err)
+	}
+	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *UnionDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
@@ -2633,20 +2669,4 @@ func (o *UnionDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
 	}
 	return nil
-}
-
-func (o UnionDefinition) MarshalYAML() (interface{}, error) {
-	jsonBytes, err := json.Marshal(o)
-	if err != nil {
-		return nil, err
-	}
-	return safeyaml.JSONtoYAMLMapSlice(jsonBytes)
-}
-
-func (o *UnionDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	jsonBytes, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
-	if err != nil {
-		return err
-	}
-	return o.UnmarshalJSON(jsonBytes)
 }
