@@ -17,6 +17,7 @@ package jsonencoding
 import (
 	"fmt"
 	"go/token"
+	"strings"
 
 	"github.com/palantir/goastwriter/astgen"
 	"github.com/palantir/goastwriter/decl"
@@ -43,6 +44,7 @@ func AliasTypeUnmarshalMethods(
 ) ([]astgen.ASTDecl, error) {
 	info.AddImports("github.com/tidwall/gjson", "github.com/palantir/conjure-go-runtime/v2/conjure-go-contract/errors")
 	info.SetImports("wparams", "github.com/palantir/witchcraft-go-params")
+	info.SetImports("werror", "github.com/palantir/witchcraft-go-error")
 	var methods []astgen.ASTDecl
 
 	methods = append(methods, publicUnmarshalJSONMethods(receiverName, receiverType)...)
@@ -63,6 +65,7 @@ func StructFieldsUnmarshalMethods(
 ) ([]astgen.ASTDecl, error) {
 	info.AddImports("github.com/tidwall/gjson", "github.com/palantir/conjure-go-runtime/v2/conjure-go-contract/errors")
 	info.SetImports("wparams", "github.com/palantir/witchcraft-go-params")
+	info.SetImports("werror", "github.com/palantir/witchcraft-go-error")
 	var methods []astgen.ASTDecl
 
 	methods = append(methods, publicUnmarshalJSONMethods(receiverName, receiverType)...)
@@ -304,11 +307,16 @@ func visitAliasUnmarshalGJSONMethodBody(receiverName string, receiverType string
 func visitStructFieldsUnmarshalGJSONMethodBody(receiverName string, fields []JSONFieldDefinition, info types.PkgInfo) ([]astgen.ASTStmt, error) {
 	var body []astgen.ASTStmt
 
-	// if !value.IsObject() { return errors.NewInvalidArgument() }
+	// if !value.IsObject() { return werror.Wrap(errors.NewInvalidArgument(), "expected json object") }
 	body = append(body, &statement.If{
 		Cond: expression.NewUnary(token.NOT, expression.NewCallFunction("value", "IsObject")),
 		Body: []astgen.ASTStmt{
-			statement.NewReturn(expression.NewCallFunction("errors", "NewInvalidArgument")), //TODO: include more helpful info (type name, invalid json) in error
+			statement.NewReturn(
+				expression.NewCallFunction("werror", "Wrap",
+					expression.NewCallFunction("errors", "NewInvalidArgument"),
+					expression.StringVal("expected json object"),
+				),
+			), //TODO: include more helpful info (type name, invalid json) in error
 		},
 	})
 	var fieldInits []astgen.ASTStmt
@@ -389,8 +397,11 @@ func visitStructFieldsUnmarshalGJSONMethodBody(receiverName string, fields []JSO
 				expression.IntVal(0),
 			),
 			Body: []astgen.ASTStmt{statement.NewReturn(
-				expression.NewCallFunction("errors", "NewInvalidArgument",
-					expression.NewCallFunction("wparams", "NewSafeParam", expression.StringVal("missingFields"), missingFieldsVar),
+				expression.NewCallFunction("werror", "Wrap",
+					expression.NewCallFunction("errors", "NewInvalidArgument",
+						expression.NewCallFunction("wparams", "NewSafeParam", expression.StringVal("missingFields"), missingFieldsVar),
+					),
+					expression.StringVal("missing json fields"),
 				),
 			)},
 		})
@@ -406,8 +417,11 @@ func visitStructFieldsUnmarshalGJSONMethodBody(receiverName string, fields []JSO
 			),
 		),
 		Body: []astgen.ASTStmt{statement.NewReturn(
-			expression.NewCallFunction("errors", "NewInvalidArgument",
-				expression.NewCallFunction("wparams", "NewSafeParam", expression.StringVal("unrecognizedFields"), unrecognizedFieldsVar),
+			expression.NewCallFunction("werror", "Wrap",
+				expression.NewCallFunction("errors", "NewInvalidArgument",
+					expression.NewCallFunction("wparams", "NewSafeParam", expression.StringVal("unrecognizedFields"), unrecognizedFieldsVar),
+				),
+				expression.StringVal("unrecognized json fields"),
 			),
 		)},
 	})
@@ -500,28 +514,28 @@ type gjsonUnmarshalValueVisitor struct {
 func (v *gjsonUnmarshalValueVisitor) VisitPrimitive(t spec.PrimitiveType) error {
 	switch t.Value() {
 	case spec.PrimitiveType_ANY:
-		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "JSON", "String", "Number", "True", "False"), v.returnErrStmt)
+		v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "JSON", "String", "Number", "True", "False")
 		v.stmts = append(v.stmts, &statement.Assignment{
 			LHS: []astgen.ASTExpr{v.selector},
 			Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
 			RHS: expression.NewCallFunction(v.valueVar, "Value"),
 		})
 	case spec.PrimitiveType_STRING:
-		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"), v.returnErrStmt)
+		v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "String")
 		v.stmts = append(v.stmts, &statement.Assignment{
 			LHS: []astgen.ASTExpr{v.selector},
 			Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
 			RHS: expression.NewSelector(expression.VariableVal(v.valueVar), "Str"),
 		})
 	case spec.PrimitiveType_INTEGER:
-		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "Number"), v.returnErrStmt)
+		v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "Number")
 
 		var rhs astgen.ASTExpr
 		if v.isMapKey {
-			v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"), v.returnErrStmt)
+			v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "String")
 			rhs = expression.NewCallExpression(expression.IntType, expression.NewCallFunction(v.valueVar, "Int"))
 		} else {
-			v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "False", "True"), v.returnErrStmt)
+			v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "False", "True")
 			rhs = expression.NewCallExpression(expression.IntType, expression.NewCallFunction(v.valueVar, "Int"))
 		}
 		v.stmts = append(v.stmts, &statement.Assignment{
@@ -564,19 +578,37 @@ func (v *gjsonUnmarshalValueVisitor) VisitPrimitive(t spec.PrimitiveType) error 
 							},
 							{
 								Exprs: nil, // default case
-								Body:  []astgen.ASTStmt{errEqualNewInvalidArgument()},
+								Body: []astgen.ASTStmt{
+									statement.NewAssignment(
+										expression.VariableVal("err"),
+										token.ASSIGN,
+										expression.NewCallFunction("werror", "Wrap",
+											expression.NewCallFunction("errors", "NewInvalidArgument"),
+											expression.StringVal("invalid json value for double"),
+										),
+									),
+								},
 							},
 						},
 					}},
 				},
 				{
 					Exprs: nil, // default case
-					Body:  []astgen.ASTStmt{errEqualNewInvalidArgument()},
+					Body: []astgen.ASTStmt{
+						statement.NewAssignment(
+							expression.VariableVal("err"),
+							token.ASSIGN,
+							expression.NewCallFunction("werror", "Wrap",
+								expression.NewCallFunction("errors", "NewInvalidArgument"),
+								expression.StringVal("invalid json type for double"),
+							),
+						),
+					},
 				},
 			},
 		})
 
-		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "Number"), v.returnErrStmt)
+		v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "Number")
 		v.stmts = append(v.stmts, &statement.Assignment{
 			LHS: []astgen.ASTExpr{v.selector},
 			Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
@@ -585,10 +617,10 @@ func (v *gjsonUnmarshalValueVisitor) VisitPrimitive(t spec.PrimitiveType) error 
 	case spec.PrimitiveType_BOOLEAN:
 		var rhs astgen.ASTExpr
 		if v.isMapKey {
-			v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"), v.returnErrStmt)
+			v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "String")
 			rhs = expression.NewCallFunction("boolean", "Boolean", expression.NewCallFunction(v.valueVar, "Bool"))
 		} else {
-			v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "False", "True"), v.returnErrStmt)
+			v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "False", "True")
 			rhs = expression.NewCallFunction(v.valueVar, "Bool")
 		}
 		v.stmts = append(v.stmts, &statement.Assignment{
@@ -598,7 +630,7 @@ func (v *gjsonUnmarshalValueVisitor) VisitPrimitive(t spec.PrimitiveType) error 
 		})
 	case spec.PrimitiveType_BINARY:
 		v.info.AddImports(types.BinaryPkg.ImportPaths()...)
-		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"), v.returnErrStmt)
+		v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "String")
 
 		binaryObj := expression.NewCallExpression(
 			expression.Type(types.BinaryPkg.GoType(v.info)),
@@ -620,7 +652,7 @@ func (v *gjsonUnmarshalValueVisitor) VisitPrimitive(t spec.PrimitiveType) error 
 			})
 		}
 	case spec.PrimitiveType_BEARERTOKEN:
-		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"), v.returnErrStmt)
+		v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "String")
 		v.stmts = append(v.stmts, &statement.Assignment{
 			LHS: []astgen.ASTExpr{v.selector},
 			Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
@@ -629,7 +661,7 @@ func (v *gjsonUnmarshalValueVisitor) VisitPrimitive(t spec.PrimitiveType) error 
 			),
 		})
 	case spec.PrimitiveType_DATETIME:
-		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"), v.returnErrStmt)
+		v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "String")
 		v.stmts = append(v.stmts, &statement.Assignment{
 			LHS: []astgen.ASTExpr{v.selector, expression.VariableVal("err")},
 			Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
@@ -638,7 +670,7 @@ func (v *gjsonUnmarshalValueVisitor) VisitPrimitive(t spec.PrimitiveType) error 
 			),
 		})
 	case spec.PrimitiveType_RID:
-		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"), v.returnErrStmt)
+		v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "String")
 		v.stmts = append(v.stmts, &statement.Assignment{
 			LHS: []astgen.ASTExpr{v.selector, expression.VariableVal("err")},
 			Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
@@ -647,7 +679,7 @@ func (v *gjsonUnmarshalValueVisitor) VisitPrimitive(t spec.PrimitiveType) error 
 			),
 		})
 	case spec.PrimitiveType_SAFELONG:
-		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "Number"), v.returnErrStmt)
+		v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "Number")
 		v.stmts = append(v.stmts, &statement.Assignment{
 			LHS: []astgen.ASTExpr{v.selector, expression.VariableVal("err")},
 			Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
@@ -655,7 +687,7 @@ func (v *gjsonUnmarshalValueVisitor) VisitPrimitive(t spec.PrimitiveType) error 
 				expression.NewCallFunction(v.valueVar, "Int")),
 		})
 	case spec.PrimitiveType_UUID:
-		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"), v.returnErrStmt)
+		v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "String")
 		v.stmts = append(v.stmts, &statement.Assignment{
 			LHS: []astgen.ASTExpr{v.selector, expression.VariableVal("err")},
 			Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
@@ -700,8 +732,12 @@ func (v *gjsonUnmarshalValueVisitor) VisitOptional(t spec.OptionalType) error {
 		Tok: tokenOrDefault(v.selectorToken, token.ASSIGN),
 		RHS: expression.NewUnary(token.AND, valVar),
 	})
+
 	v.stmts = append(v.stmts, &statement.If{
-		Cond: gjsonTypeCondition(v.valueVar, "Null"),
+		Cond: expression.NewBinary(
+			expression.NewSelector(expression.VariableVal(v.valueVar), "Type"),
+			token.NEQ,
+			expression.NewSelector(expression.VariableVal("gjson"), "Null")),
 		Body: innerStmts,
 	})
 	return nil
@@ -739,7 +775,14 @@ func (v *gjsonUnmarshalValueVisitor) VisitList(t spec.ListType) error {
 	})
 	innerStmts = append(innerStmts, statement.NewReturn(expression.NewBinary(expression.VariableVal("err"), token.EQL, expression.Nil)))
 
-	v.typeCheck = gjsonTypeCheck(expression.NewUnary(token.NOT, expression.NewCallFunction(v.valueVar, "IsArray")), v.returnErrStmt)
+	v.typeCheck = &statement.If{
+		Cond: expression.NewUnary(token.NOT, expression.NewCallFunction(v.valueVar, "IsArray")),
+		Body: []astgen.ASTStmt{
+			statement.NewAssignment(expression.VariableVal("err"), token.ASSIGN, errWrappedNewInvalidArgument("expected array type", nil, nil)),
+			v.returnErrStmt,
+		},
+	}
+
 	// value.ForEach(func(_, value gjson.Result) bool { innerStmts...; return err == nil }
 	v.stmts = append(v.stmts, statement.NewExpression(expression.NewCallFunction(v.valueVar, "ForEach",
 		expression.NewFuncLit(
@@ -825,8 +868,13 @@ func (v *gjsonUnmarshalValueVisitor) VisitMap(t spec.MapType) error {
 	innerStmts = append(innerStmts, valDecl)
 	innerStmts = append(innerStmts, valVisitor.stmts...)
 
-	v.typeCheck = gjsonTypeCheck(expression.NewUnary(token.NOT, expression.NewCallFunction(v.valueVar, "IsObject")), v.returnErrStmt)
-
+	v.typeCheck = &statement.If{
+		Cond: expression.NewUnary(token.NOT, expression.NewCallFunction(v.valueVar, "IsObject")),
+		Body: []astgen.ASTStmt{
+			statement.NewAssignment(expression.VariableVal("err"), token.ASSIGN, errWrappedNewInvalidArgument("expected object type", nil, nil)),
+			v.returnErrStmt,
+		},
+	}
 	collectionInit, err := mapTypeProvider.CollectionInitializationIfNeeded(v.info)
 	if err != nil {
 		return err
@@ -921,11 +969,11 @@ func (v *gjsonUnmarshalValueReferenceDefVisitor) VisitAlias(def spec.AliasDefini
 		return err
 	}
 	if aliasTypeProvider.IsSpecificType(visitors.IsString) {
-		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"), v.returnErrStmt)
+		v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "String")
 		v.stmts = append(v.stmts, statement.NewAssignment(v.selector, tokenOrDefault(v.selectorToken, token.ASSIGN),
 			expression.NewCallExpression(expression.Type(v.typer.GoType(v.info)), expression.NewSelector(expression.VariableVal(v.valueVar), "Str"))))
 	} else if aliasTypeProvider.IsSpecificType(visitors.IsText) {
-		v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"), v.returnErrStmt)
+		v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "String")
 		v.stmts = append(v.stmts, unmarshalTextValue(v.selector, v.valueVar))
 	} else {
 		v.stmts = append(v.stmts, unmarshalJSONStringValue(v.selector, v.valueVar))
@@ -934,7 +982,7 @@ func (v *gjsonUnmarshalValueReferenceDefVisitor) VisitAlias(def spec.AliasDefini
 }
 
 func (v *gjsonUnmarshalValueReferenceDefVisitor) VisitEnum(_ spec.EnumDefinition) error {
-	v.typeCheck = gjsonTypeCheck(gjsonTypeCondition(v.valueVar, "String"), v.returnErrStmt)
+	v.typeCheck = gjsonTypeCheck(v.returnErrStmt, v.valueVar, "String")
 	v.stmts = append(v.stmts, unmarshalTextValue(v.selector, v.valueVar))
 	return nil
 }
@@ -996,62 +1044,66 @@ func unmarshalJSONStringValue(selector astgen.ASTExpr, valueVar string) astgen.A
 	}
 }
 
-func gjsonTypeCheck(cond astgen.ASTExpr, returnErrStmt astgen.ASTStmt) astgen.ASTStmt {
-	check := &statement.If{
-		Cond: cond,
-		Body: errEqualNewInvalidArgumentReturn(returnErrStmt),
-	}
-	return check
-}
-
-func gjsonTypeCondition(valueVar string, typeNames ...string) astgen.ASTExpr {
+// if value.Type != gjson.Number { err = werror.Wrap(errors.NewInvalidArgument(), "invalid json type"); returnErrStmt }
+func gjsonTypeCheck(returnErrStmt astgen.ASTStmt, valueVar string, typeNames ...string) astgen.ASTStmt {
 	var cond astgen.ASTExpr
 	for _, typeName := range typeNames {
-		test := expression.NewBinary(expression.NewSelector(expression.VariableVal(valueVar), "Type"), token.NEQ, expression.NewSelector(expression.VariableVal("gjson"), typeName))
+		test := expression.NewBinary(
+			expression.NewSelector(expression.VariableVal(valueVar), "Type"),
+			token.NEQ,
+			expression.NewSelector(expression.VariableVal("gjson"), typeName),
+		)
 		if cond == nil {
 			cond = test
 		} else {
 			cond = expression.NewBinary(cond, token.LAND, test)
 		}
 	}
-	return cond
+	errExpr := errWrappedNewInvalidArgument(
+		fmt.Sprintf("expected json type %s", strings.Join(typeNames, "/")),
+		nil,
+		[]astgen.ASTExpr{expression.NewCallFunction(
+			"werror", "SafeParam",
+			expression.StringVal("fieldType"),
+			expression.NewCallExpression(expression.NewSelector(expression.NewSelector(expression.VariableVal(valueVar), "Type"), "String")),
+		)})
+
+	return &statement.If{
+		Cond: cond,
+		Body: []astgen.ASTStmt{
+			statement.NewAssignment(expression.VariableVal("err"), token.ASSIGN, errExpr), // TODO add more type context to errors
+			returnErrStmt,
+		},
+	}
 }
 
-// if !gjson.Valid(data) { return errors.NewInvalidArgument() }
+// if !gjson.Valid(data) { return werror.Wrap(errors.NewInvalidArgument(), "invalid json") }
 func validDataJSONStringCheck() *statement.If {
 	return &statement.If{
 		Cond: expression.NewUnary(token.NOT, expression.NewCallFunction("gjson", "Valid", expression.VariableVal("data"))),
 		Body: []astgen.ASTStmt{
-			statement.NewReturn(expression.NewCallFunction("errors", "NewInvalidArgument")),
+			statement.NewReturn(errWrappedNewInvalidArgument("invalid json", nil, nil)),
 		},
 	}
 }
 
-// if !gjson.ValidBytes(data) { return errors.NewInvalidArgument() }
+// if !gjson.ValidBytes(data) { return werror.Wrap(errors.NewInvalidArgument(), "invalid json") }
 func validDataJSONBytesCheck() *statement.If {
 	return &statement.If{
 		Cond: expression.NewUnary(token.NOT, expression.NewCallFunction("gjson", "ValidBytes", expression.VariableVal("data"))),
 		Body: []astgen.ASTStmt{
-			statement.NewReturn(expression.NewCallFunction("errors", "NewInvalidArgument")),
+			statement.NewReturn(errWrappedNewInvalidArgument("invalid json", nil, nil)),
 		},
 	}
 }
 
-// err = errors.NewInvalidArgument()
-func errEqualNewInvalidArgument() *statement.Assignment {
-	return statement.NewAssignment(
-		expression.VariableVal("err"),
-		token.ASSIGN,
-		expression.NewCallFunction("errors", "NewInvalidArgument"),
-	)
-}
-
-func errEqualNewInvalidArgumentReturn(returnErrStmt astgen.ASTStmt) []astgen.ASTStmt {
-	stmts := []astgen.ASTStmt{errEqualNewInvalidArgument()}
-	if returnErrStmt != nil {
-		stmts = append(stmts, returnErrStmt)
-	}
-	return stmts
+// werror.Wrap(errors.NewInvalidArgument(), "message")
+func errWrappedNewInvalidArgument(message string, conjureParams []astgen.ASTExpr, werrorParams []astgen.ASTExpr) astgen.ASTExpr {
+	return expression.NewCallFunction("werror", "Wrap",
+		append([]astgen.ASTExpr{
+			expression.NewCallFunction("errors", "NewInvalidArgument", conjureParams...),
+			expression.StringVal(message),
+		}, werrorParams...)...)
 }
 
 func tokenOrDefault(t, d token.Token) token.Token {

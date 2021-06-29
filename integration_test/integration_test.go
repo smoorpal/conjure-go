@@ -62,9 +62,9 @@ import (
 )
 
 type Dataset struct {
-	FileSystemId string `json:"fileSystemId"`
+	FileSystemId string ` + "`" + `json:"fileSystemId"` + "`" + `
 	// Uniquely identifies this dataset.
-	Rid rid.ResourceIdentifier `json:"rid"`
+	Rid rid.ResourceIdentifier ` + "`" + `json:"rid"` + "`" + `
 }
 
 func (o Dataset) MarshalJSON() ([]byte, error) {

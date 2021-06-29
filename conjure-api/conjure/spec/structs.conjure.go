@@ -8,6 +8,7 @@ import (
 	"github.com/palantir/conjure-go-runtime/v2/conjure-go-contract/errors"
 	"github.com/palantir/pkg/safejson"
 	"github.com/palantir/pkg/safeyaml"
+	werror "github.com/palantir/witchcraft-go-error"
 	wparams "github.com/palantir/witchcraft-go-params"
 	"github.com/tidwall/gjson"
 )
@@ -35,7 +36,7 @@ func (o AliasDefinition) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *AliasDefinition) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -43,7 +44,7 @@ func (o *AliasDefinition) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *AliasDefinition) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -52,7 +53,7 @@ func (o *AliasDefinition) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *AliasDefinition) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -60,7 +61,7 @@ func (o *AliasDefinition) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *AliasDefinition) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -69,14 +70,14 @@ func (o *AliasDefinition) UnmarshalJSONStringStrict(data string) error {
 func (o *AliasDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *AliasDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenTypeName bool
 	var seenAlias bool
@@ -104,7 +105,7 @@ func (o *AliasDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 		case "docs":
 			if value.Type != gjson.Null {
 				if value.Type != gjson.String {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 					return false
 				}
 				var optionalValue Documentation
@@ -129,10 +130,10 @@ func (o *AliasDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 		missingFields = append(missingFields, "alias")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -169,7 +170,7 @@ func (o ArgumentDefinition) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *ArgumentDefinition) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -177,7 +178,7 @@ func (o *ArgumentDefinition) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *ArgumentDefinition) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -186,7 +187,7 @@ func (o *ArgumentDefinition) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *ArgumentDefinition) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -194,7 +195,7 @@ func (o *ArgumentDefinition) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *ArgumentDefinition) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -203,14 +204,14 @@ func (o *ArgumentDefinition) UnmarshalJSONStringStrict(data string) error {
 func (o *ArgumentDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *ArgumentDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenArgName bool
 	var seenType bool
@@ -227,7 +228,7 @@ func (o *ArgumentDefinition) unmarshalGJSON(value gjson.Result, strict bool) err
 		case "argName":
 			seenArgName = true
 			if value.Type != gjson.String {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 				return false
 			}
 			o.ArgName = ArgumentName(value.Str)
@@ -248,7 +249,7 @@ func (o *ArgumentDefinition) unmarshalGJSON(value gjson.Result, strict bool) err
 		case "docs":
 			if value.Type != gjson.Null {
 				if value.Type != gjson.String {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 					return false
 				}
 				var optionalValue Documentation
@@ -257,7 +258,7 @@ func (o *ArgumentDefinition) unmarshalGJSON(value gjson.Result, strict bool) err
 			}
 		case "markers":
 			if !value.IsArray() {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected array type")
 				return false
 			}
 			value.ForEach(func(_, value gjson.Result) bool {
@@ -272,12 +273,12 @@ func (o *ArgumentDefinition) unmarshalGJSON(value gjson.Result, strict bool) err
 			})
 		case "tags":
 			if !value.IsArray() {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected array type")
 				return false
 			}
 			value.ForEach(func(_, value gjson.Result) bool {
 				if value.Type != gjson.String {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 					return false
 				}
 				var listElement string
@@ -306,10 +307,10 @@ func (o *ArgumentDefinition) unmarshalGJSON(value gjson.Result, strict bool) err
 		missingFields = append(missingFields, "paramType")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -354,7 +355,7 @@ func (o ConjureDefinition) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *ConjureDefinition) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -362,7 +363,7 @@ func (o *ConjureDefinition) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *ConjureDefinition) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -371,7 +372,7 @@ func (o *ConjureDefinition) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *ConjureDefinition) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -379,7 +380,7 @@ func (o *ConjureDefinition) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *ConjureDefinition) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -388,14 +389,14 @@ func (o *ConjureDefinition) UnmarshalJSONStringStrict(data string) error {
 func (o *ConjureDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *ConjureDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenVersion bool
 	o.Errors = make([]ErrorDefinition, 0)
@@ -411,14 +412,14 @@ func (o *ConjureDefinition) unmarshalGJSON(value gjson.Result, strict bool) erro
 		switch key.Str {
 		case "version":
 			seenVersion = true
-			if value.Type != gjson.Number {
-				err = errors.NewInvalidArgument()
+			if value.Type != gjson.False && value.Type != gjson.True {
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected json type False/True", werror.SafeParam("fieldType", value.Type.String()))
 				return false
 			}
 			o.Version = int(value.Int())
 		case "errors":
 			if !value.IsArray() {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected array type")
 				return false
 			}
 			value.ForEach(func(_, value gjson.Result) bool {
@@ -433,7 +434,7 @@ func (o *ConjureDefinition) unmarshalGJSON(value gjson.Result, strict bool) erro
 			})
 		case "types":
 			if !value.IsArray() {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected array type")
 				return false
 			}
 			value.ForEach(func(_, value gjson.Result) bool {
@@ -448,7 +449,7 @@ func (o *ConjureDefinition) unmarshalGJSON(value gjson.Result, strict bool) erro
 			})
 		case "services":
 			if !value.IsArray() {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected array type")
 				return false
 			}
 			value.ForEach(func(_, value gjson.Result) bool {
@@ -463,7 +464,7 @@ func (o *ConjureDefinition) unmarshalGJSON(value gjson.Result, strict bool) erro
 			})
 		case "extensions":
 			if !value.IsObject() {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected object type")
 				return false
 			}
 			if o.Extensions == nil {
@@ -471,11 +472,11 @@ func (o *ConjureDefinition) unmarshalGJSON(value gjson.Result, strict bool) erro
 			}
 			value.ForEach(func(key, value gjson.Result) bool {
 				if key.Type != gjson.String {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", key.Type.String()))
 					return false
 				}
 				if value.Type != gjson.JSON && value.Type != gjson.String && value.Type != gjson.Number && value.Type != gjson.True && value.Type != gjson.False {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type JSON/String/Number/True/False", werror.SafeParam("fieldType", value.Type.String()))
 					return false
 				}
 				var mapKey string
@@ -500,10 +501,10 @@ func (o *ConjureDefinition) unmarshalGJSON(value gjson.Result, strict bool) erro
 		missingFields = append(missingFields, "version")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -529,7 +530,7 @@ func (o CookieAuthType) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *CookieAuthType) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -537,7 +538,7 @@ func (o *CookieAuthType) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *CookieAuthType) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -546,7 +547,7 @@ func (o *CookieAuthType) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *CookieAuthType) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -554,7 +555,7 @@ func (o *CookieAuthType) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *CookieAuthType) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -563,14 +564,14 @@ func (o *CookieAuthType) UnmarshalJSONStringStrict(data string) error {
 func (o *CookieAuthType) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *CookieAuthType) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenCookieName bool
 	var unrecognizedFields []string
@@ -583,7 +584,7 @@ func (o *CookieAuthType) unmarshalGJSON(value gjson.Result, strict bool) error {
 		case "cookieName":
 			seenCookieName = true
 			if value.Type != gjson.String {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 				return false
 			}
 			o.CookieName = value.Str
@@ -602,10 +603,10 @@ func (o *CookieAuthType) unmarshalGJSON(value gjson.Result, strict bool) error {
 		missingFields = append(missingFields, "cookieName")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -649,7 +650,7 @@ func (o EndpointDefinition) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *EndpointDefinition) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -657,7 +658,7 @@ func (o *EndpointDefinition) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *EndpointDefinition) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -666,7 +667,7 @@ func (o *EndpointDefinition) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *EndpointDefinition) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -674,7 +675,7 @@ func (o *EndpointDefinition) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *EndpointDefinition) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -683,14 +684,14 @@ func (o *EndpointDefinition) UnmarshalJSONStringStrict(data string) error {
 func (o *EndpointDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *EndpointDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenEndpointName bool
 	var seenHttpMethod bool
@@ -708,21 +709,21 @@ func (o *EndpointDefinition) unmarshalGJSON(value gjson.Result, strict bool) err
 		case "endpointName":
 			seenEndpointName = true
 			if value.Type != gjson.String {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 				return false
 			}
 			o.EndpointName = EndpointName(value.Str)
 		case "httpMethod":
 			seenHttpMethod = true
 			if value.Type != gjson.String {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 				return false
 			}
 			err = o.HttpMethod.UnmarshalText([]byte(value.Str))
 		case "httpPath":
 			seenHttpPath = true
 			if value.Type != gjson.String {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 				return false
 			}
 			o.HttpPath = HttpPath(value.Str)
@@ -738,7 +739,7 @@ func (o *EndpointDefinition) unmarshalGJSON(value gjson.Result, strict bool) err
 			}
 		case "args":
 			if !value.IsArray() {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected array type")
 				return false
 			}
 			value.ForEach(func(_, value gjson.Result) bool {
@@ -764,7 +765,7 @@ func (o *EndpointDefinition) unmarshalGJSON(value gjson.Result, strict bool) err
 		case "docs":
 			if value.Type != gjson.Null {
 				if value.Type != gjson.String {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 					return false
 				}
 				var optionalValue Documentation
@@ -774,7 +775,7 @@ func (o *EndpointDefinition) unmarshalGJSON(value gjson.Result, strict bool) err
 		case "deprecated":
 			if value.Type != gjson.Null {
 				if value.Type != gjson.String {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 					return false
 				}
 				var optionalValue Documentation
@@ -783,7 +784,7 @@ func (o *EndpointDefinition) unmarshalGJSON(value gjson.Result, strict bool) err
 			}
 		case "markers":
 			if !value.IsArray() {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected array type")
 				return false
 			}
 			value.ForEach(func(_, value gjson.Result) bool {
@@ -798,12 +799,12 @@ func (o *EndpointDefinition) unmarshalGJSON(value gjson.Result, strict bool) err
 			})
 		case "tags":
 			if !value.IsArray() {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected array type")
 				return false
 			}
 			value.ForEach(func(_, value gjson.Result) bool {
 				if value.Type != gjson.String {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 					return false
 				}
 				var listElement string
@@ -832,10 +833,10 @@ func (o *EndpointDefinition) unmarshalGJSON(value gjson.Result, strict bool) err
 		missingFields = append(missingFields, "httpPath")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -866,7 +867,7 @@ func (o EnumDefinition) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *EnumDefinition) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -874,7 +875,7 @@ func (o *EnumDefinition) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *EnumDefinition) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -883,7 +884,7 @@ func (o *EnumDefinition) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *EnumDefinition) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -891,7 +892,7 @@ func (o *EnumDefinition) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *EnumDefinition) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -900,14 +901,14 @@ func (o *EnumDefinition) UnmarshalJSONStringStrict(data string) error {
 func (o *EnumDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *EnumDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenTypeName bool
 	o.Values = make([]EnumValueDefinition, 0)
@@ -927,7 +928,7 @@ func (o *EnumDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
 			}
 		case "values":
 			if !value.IsArray() {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected array type")
 				return false
 			}
 			value.ForEach(func(_, value gjson.Result) bool {
@@ -943,7 +944,7 @@ func (o *EnumDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
 		case "docs":
 			if value.Type != gjson.Null {
 				if value.Type != gjson.String {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 					return false
 				}
 				var optionalValue Documentation
@@ -965,10 +966,10 @@ func (o *EnumDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
 		missingFields = append(missingFields, "typeName")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -996,7 +997,7 @@ func (o EnumValueDefinition) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *EnumValueDefinition) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -1004,7 +1005,7 @@ func (o *EnumValueDefinition) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *EnumValueDefinition) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -1013,7 +1014,7 @@ func (o *EnumValueDefinition) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *EnumValueDefinition) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -1021,7 +1022,7 @@ func (o *EnumValueDefinition) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *EnumValueDefinition) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -1030,14 +1031,14 @@ func (o *EnumValueDefinition) UnmarshalJSONStringStrict(data string) error {
 func (o *EnumValueDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *EnumValueDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenValue bool
 	var unrecognizedFields []string
@@ -1050,14 +1051,14 @@ func (o *EnumValueDefinition) unmarshalGJSON(value gjson.Result, strict bool) er
 		case "value":
 			seenValue = true
 			if value.Type != gjson.String {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 				return false
 			}
 			o.Value = value.Str
 		case "docs":
 			if value.Type != gjson.Null {
 				if value.Type != gjson.String {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 					return false
 				}
 				var optionalValue Documentation
@@ -1067,7 +1068,7 @@ func (o *EnumValueDefinition) unmarshalGJSON(value gjson.Result, strict bool) er
 		case "deprecated":
 			if value.Type != gjson.Null {
 				if value.Type != gjson.String {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 					return false
 				}
 				var optionalValue Documentation
@@ -1089,10 +1090,10 @@ func (o *EnumValueDefinition) unmarshalGJSON(value gjson.Result, strict bool) er
 		missingFields = append(missingFields, "value")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -1129,7 +1130,7 @@ func (o ErrorDefinition) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *ErrorDefinition) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -1137,7 +1138,7 @@ func (o *ErrorDefinition) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *ErrorDefinition) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -1146,7 +1147,7 @@ func (o *ErrorDefinition) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *ErrorDefinition) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -1154,7 +1155,7 @@ func (o *ErrorDefinition) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *ErrorDefinition) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -1163,14 +1164,14 @@ func (o *ErrorDefinition) UnmarshalJSONStringStrict(data string) error {
 func (o *ErrorDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *ErrorDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenErrorName bool
 	var seenNamespace bool
@@ -1194,7 +1195,7 @@ func (o *ErrorDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 		case "docs":
 			if value.Type != gjson.Null {
 				if value.Type != gjson.String {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 					return false
 				}
 				var optionalValue Documentation
@@ -1204,20 +1205,20 @@ func (o *ErrorDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 		case "namespace":
 			seenNamespace = true
 			if value.Type != gjson.String {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 				return false
 			}
 			o.Namespace = ErrorNamespace(value.Str)
 		case "code":
 			seenCode = true
 			if value.Type != gjson.String {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 				return false
 			}
 			err = o.Code.UnmarshalText([]byte(value.Str))
 		case "safeArgs":
 			if !value.IsArray() {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected array type")
 				return false
 			}
 			value.ForEach(func(_, value gjson.Result) bool {
@@ -1232,7 +1233,7 @@ func (o *ErrorDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 			})
 		case "unsafeArgs":
 			if !value.IsArray() {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected array type")
 				return false
 			}
 			value.ForEach(func(_, value gjson.Result) bool {
@@ -1266,10 +1267,10 @@ func (o *ErrorDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 		missingFields = append(missingFields, "code")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -1298,7 +1299,7 @@ func (o ExternalReference) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *ExternalReference) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -1306,7 +1307,7 @@ func (o *ExternalReference) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *ExternalReference) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -1315,7 +1316,7 @@ func (o *ExternalReference) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *ExternalReference) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -1323,7 +1324,7 @@ func (o *ExternalReference) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *ExternalReference) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -1332,14 +1333,14 @@ func (o *ExternalReference) UnmarshalJSONStringStrict(data string) error {
 func (o *ExternalReference) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *ExternalReference) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenExternalReference bool
 	var seenFallback bool
@@ -1382,10 +1383,10 @@ func (o *ExternalReference) unmarshalGJSON(value gjson.Result, strict bool) erro
 		missingFields = append(missingFields, "fallback")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -1414,7 +1415,7 @@ func (o FieldDefinition) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *FieldDefinition) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -1422,7 +1423,7 @@ func (o *FieldDefinition) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *FieldDefinition) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -1431,7 +1432,7 @@ func (o *FieldDefinition) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *FieldDefinition) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -1439,7 +1440,7 @@ func (o *FieldDefinition) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *FieldDefinition) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -1448,14 +1449,14 @@ func (o *FieldDefinition) UnmarshalJSONStringStrict(data string) error {
 func (o *FieldDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *FieldDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenFieldName bool
 	var seenType bool
@@ -1469,7 +1470,7 @@ func (o *FieldDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 		case "fieldName":
 			seenFieldName = true
 			if value.Type != gjson.String {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 				return false
 			}
 			o.FieldName = FieldName(value.Str)
@@ -1483,7 +1484,7 @@ func (o *FieldDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 		case "docs":
 			if value.Type != gjson.Null {
 				if value.Type != gjson.String {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 					return false
 				}
 				var optionalValue Documentation
@@ -1493,7 +1494,7 @@ func (o *FieldDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 		case "deprecated":
 			if value.Type != gjson.Null {
 				if value.Type != gjson.String {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 					return false
 				}
 				var optionalValue Documentation
@@ -1518,10 +1519,10 @@ func (o *FieldDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 		missingFields = append(missingFields, "type")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -1550,7 +1551,7 @@ func (o HeaderParameterType) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *HeaderParameterType) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -1558,7 +1559,7 @@ func (o *HeaderParameterType) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *HeaderParameterType) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -1567,7 +1568,7 @@ func (o *HeaderParameterType) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *HeaderParameterType) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -1575,7 +1576,7 @@ func (o *HeaderParameterType) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *HeaderParameterType) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -1584,14 +1585,14 @@ func (o *HeaderParameterType) UnmarshalJSONStringStrict(data string) error {
 func (o *HeaderParameterType) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *HeaderParameterType) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenParamId bool
 	var unrecognizedFields []string
@@ -1604,7 +1605,7 @@ func (o *HeaderParameterType) unmarshalGJSON(value gjson.Result, strict bool) er
 		case "paramId":
 			seenParamId = true
 			if value.Type != gjson.String {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 				return false
 			}
 			o.ParamId = ParameterId(value.Str)
@@ -1623,10 +1624,10 @@ func (o *HeaderParameterType) unmarshalGJSON(value gjson.Result, strict bool) er
 		missingFields = append(missingFields, "paramId")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -1652,7 +1653,7 @@ func (o ListType) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *ListType) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -1660,7 +1661,7 @@ func (o *ListType) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *ListType) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -1669,7 +1670,7 @@ func (o *ListType) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *ListType) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -1677,7 +1678,7 @@ func (o *ListType) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *ListType) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -1686,14 +1687,14 @@ func (o *ListType) UnmarshalJSONStringStrict(data string) error {
 func (o *ListType) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *ListType) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenItemType bool
 	var unrecognizedFields []string
@@ -1725,10 +1726,10 @@ func (o *ListType) unmarshalGJSON(value gjson.Result, strict bool) error {
 		missingFields = append(missingFields, "itemType")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -1755,7 +1756,7 @@ func (o MapType) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *MapType) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -1763,7 +1764,7 @@ func (o *MapType) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *MapType) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -1772,7 +1773,7 @@ func (o *MapType) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *MapType) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -1780,7 +1781,7 @@ func (o *MapType) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *MapType) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -1789,14 +1790,14 @@ func (o *MapType) UnmarshalJSONStringStrict(data string) error {
 func (o *MapType) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *MapType) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenKeyType bool
 	var seenValueType bool
@@ -1839,10 +1840,10 @@ func (o *MapType) unmarshalGJSON(value gjson.Result, strict bool) error {
 		missingFields = append(missingFields, "valueType")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -1873,7 +1874,7 @@ func (o ObjectDefinition) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *ObjectDefinition) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -1881,7 +1882,7 @@ func (o *ObjectDefinition) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *ObjectDefinition) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -1890,7 +1891,7 @@ func (o *ObjectDefinition) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *ObjectDefinition) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -1898,7 +1899,7 @@ func (o *ObjectDefinition) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *ObjectDefinition) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -1907,14 +1908,14 @@ func (o *ObjectDefinition) UnmarshalJSONStringStrict(data string) error {
 func (o *ObjectDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *ObjectDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenTypeName bool
 	o.Fields = make([]FieldDefinition, 0)
@@ -1934,7 +1935,7 @@ func (o *ObjectDefinition) unmarshalGJSON(value gjson.Result, strict bool) error
 			}
 		case "fields":
 			if !value.IsArray() {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected array type")
 				return false
 			}
 			value.ForEach(func(_, value gjson.Result) bool {
@@ -1950,7 +1951,7 @@ func (o *ObjectDefinition) unmarshalGJSON(value gjson.Result, strict bool) error
 		case "docs":
 			if value.Type != gjson.Null {
 				if value.Type != gjson.String {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 					return false
 				}
 				var optionalValue Documentation
@@ -1972,10 +1973,10 @@ func (o *ObjectDefinition) unmarshalGJSON(value gjson.Result, strict bool) error
 		missingFields = append(missingFields, "typeName")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -2001,7 +2002,7 @@ func (o OptionalType) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *OptionalType) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -2009,7 +2010,7 @@ func (o *OptionalType) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *OptionalType) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -2018,7 +2019,7 @@ func (o *OptionalType) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *OptionalType) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -2026,7 +2027,7 @@ func (o *OptionalType) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *OptionalType) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -2035,14 +2036,14 @@ func (o *OptionalType) UnmarshalJSONStringStrict(data string) error {
 func (o *OptionalType) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *OptionalType) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenItemType bool
 	var unrecognizedFields []string
@@ -2074,10 +2075,10 @@ func (o *OptionalType) unmarshalGJSON(value gjson.Result, strict bool) error {
 		missingFields = append(missingFields, "itemType")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -2106,7 +2107,7 @@ func (o QueryParameterType) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *QueryParameterType) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -2114,7 +2115,7 @@ func (o *QueryParameterType) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *QueryParameterType) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -2123,7 +2124,7 @@ func (o *QueryParameterType) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *QueryParameterType) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -2131,7 +2132,7 @@ func (o *QueryParameterType) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *QueryParameterType) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -2140,14 +2141,14 @@ func (o *QueryParameterType) UnmarshalJSONStringStrict(data string) error {
 func (o *QueryParameterType) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *QueryParameterType) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenParamId bool
 	var unrecognizedFields []string
@@ -2160,7 +2161,7 @@ func (o *QueryParameterType) unmarshalGJSON(value gjson.Result, strict bool) err
 		case "paramId":
 			seenParamId = true
 			if value.Type != gjson.String {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 				return false
 			}
 			o.ParamId = ParameterId(value.Str)
@@ -2179,10 +2180,10 @@ func (o *QueryParameterType) unmarshalGJSON(value gjson.Result, strict bool) err
 		missingFields = append(missingFields, "paramId")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -2213,7 +2214,7 @@ func (o ServiceDefinition) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *ServiceDefinition) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -2221,7 +2222,7 @@ func (o *ServiceDefinition) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *ServiceDefinition) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -2230,7 +2231,7 @@ func (o *ServiceDefinition) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *ServiceDefinition) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -2238,7 +2239,7 @@ func (o *ServiceDefinition) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *ServiceDefinition) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -2247,14 +2248,14 @@ func (o *ServiceDefinition) UnmarshalJSONStringStrict(data string) error {
 func (o *ServiceDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *ServiceDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenServiceName bool
 	o.Endpoints = make([]EndpointDefinition, 0)
@@ -2274,7 +2275,7 @@ func (o *ServiceDefinition) unmarshalGJSON(value gjson.Result, strict bool) erro
 			}
 		case "endpoints":
 			if !value.IsArray() {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected array type")
 				return false
 			}
 			value.ForEach(func(_, value gjson.Result) bool {
@@ -2290,7 +2291,7 @@ func (o *ServiceDefinition) unmarshalGJSON(value gjson.Result, strict bool) erro
 		case "docs":
 			if value.Type != gjson.Null {
 				if value.Type != gjson.String {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 					return false
 				}
 				var optionalValue Documentation
@@ -2312,10 +2313,10 @@ func (o *ServiceDefinition) unmarshalGJSON(value gjson.Result, strict bool) erro
 		missingFields = append(missingFields, "serviceName")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -2341,7 +2342,7 @@ func (o SetType) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *SetType) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -2349,7 +2350,7 @@ func (o *SetType) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *SetType) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -2358,7 +2359,7 @@ func (o *SetType) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *SetType) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -2366,7 +2367,7 @@ func (o *SetType) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *SetType) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -2375,14 +2376,14 @@ func (o *SetType) UnmarshalJSONStringStrict(data string) error {
 func (o *SetType) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *SetType) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenItemType bool
 	var unrecognizedFields []string
@@ -2414,10 +2415,10 @@ func (o *SetType) unmarshalGJSON(value gjson.Result, strict bool) error {
 		missingFields = append(missingFields, "itemType")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -2446,7 +2447,7 @@ func (o TypeName) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *TypeName) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -2454,7 +2455,7 @@ func (o *TypeName) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *TypeName) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -2463,7 +2464,7 @@ func (o *TypeName) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *TypeName) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -2471,7 +2472,7 @@ func (o *TypeName) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *TypeName) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -2480,14 +2481,14 @@ func (o *TypeName) UnmarshalJSONStringStrict(data string) error {
 func (o *TypeName) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *TypeName) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenName bool
 	var seenPackage bool
@@ -2501,14 +2502,14 @@ func (o *TypeName) unmarshalGJSON(value gjson.Result, strict bool) error {
 		case "name":
 			seenName = true
 			if value.Type != gjson.String {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 				return false
 			}
 			o.Name = value.Str
 		case "package":
 			seenPackage = true
 			if value.Type != gjson.String {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 				return false
 			}
 			o.Package = value.Str
@@ -2530,10 +2531,10 @@ func (o *TypeName) unmarshalGJSON(value gjson.Result, strict bool) error {
 		missingFields = append(missingFields, "package")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
@@ -2564,7 +2565,7 @@ func (o UnionDefinition) MarshalYAML() (interface{}, error) {
 // Prefer UnmarshalJSONString if data is already in string form to avoid an extra copy.
 func (o *UnionDefinition) UnmarshalJSON(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
@@ -2572,7 +2573,7 @@ func (o *UnionDefinition) UnmarshalJSON(data []byte) error {
 // UnmarshalJSONString deserializes data, ignoring unrecognized keys.
 func (o *UnionDefinition) UnmarshalJSONString(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), false)
 }
@@ -2581,7 +2582,7 @@ func (o *UnionDefinition) UnmarshalJSONString(data string) error {
 // Prefer UnmarshalJSONStringStrict if data is already in string form to avoid an extra copy.
 func (o *UnionDefinition) UnmarshalJSONStrict(data []byte) error {
 	if !gjson.ValidBytes(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), true)
 }
@@ -2589,7 +2590,7 @@ func (o *UnionDefinition) UnmarshalJSONStrict(data []byte) error {
 // UnmarshalJSONStringStrict deserializes data, rejecting unrecognized keys.
 func (o *UnionDefinition) UnmarshalJSONStringStrict(data string) error {
 	if !gjson.Valid(data) {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "invalid json")
 	}
 	return o.unmarshalGJSON(gjson.Parse(data), true)
 }
@@ -2598,14 +2599,14 @@ func (o *UnionDefinition) UnmarshalJSONStringStrict(data string) error {
 func (o *UnionDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data, err := safeyaml.UnmarshalerToJSONBytes(unmarshal)
 	if err != nil {
-		return errors.WrapWithInvalidArgument(err)
+		return werror.Wrap(err, "failed to convert YAML to JSON")
 	}
 	return o.unmarshalGJSON(gjson.ParseBytes(data), false)
 }
 
 func (o *UnionDefinition) unmarshalGJSON(value gjson.Result, strict bool) error {
 	if !value.IsObject() {
-		return errors.NewInvalidArgument()
+		return werror.Wrap(errors.NewInvalidArgument(), "expected json object")
 	}
 	var seenTypeName bool
 	o.Union = make([]FieldDefinition, 0)
@@ -2625,7 +2626,7 @@ func (o *UnionDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 			}
 		case "union":
 			if !value.IsArray() {
-				err = errors.NewInvalidArgument()
+				err = werror.Wrap(errors.NewInvalidArgument(), "expected array type")
 				return false
 			}
 			value.ForEach(func(_, value gjson.Result) bool {
@@ -2641,7 +2642,7 @@ func (o *UnionDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 		case "docs":
 			if value.Type != gjson.Null {
 				if value.Type != gjson.String {
-					err = errors.NewInvalidArgument()
+					err = werror.Wrap(errors.NewInvalidArgument(), "expected json type String", werror.SafeParam("fieldType", value.Type.String()))
 					return false
 				}
 				var optionalValue Documentation
@@ -2663,10 +2664,10 @@ func (o *UnionDefinition) unmarshalGJSON(value gjson.Result, strict bool) error 
 		missingFields = append(missingFields, "typeName")
 	}
 	if len(missingFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("missingFields", missingFields)), "missing json fields")
 	}
 	if strict && len(unrecognizedFields) > 0 {
-		return errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields))
+		return werror.Wrap(errors.NewInvalidArgument(wparams.NewSafeParam("unrecognizedFields", unrecognizedFields)), "unrecognized json fields")
 	}
 	return nil
 }
