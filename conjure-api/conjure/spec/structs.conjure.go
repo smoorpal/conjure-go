@@ -186,6 +186,7 @@ func (o *CookieAuthType) UnmarshalYAML(unmarshal func(interface{}) error) error 
 type EndpointDefinition struct {
 	EndpointName EndpointName         `json:"endpointName"`
 	HttpMethod   HttpMethod           `json:"httpMethod"`
+	Grpc         Grpc                 `json:"grpc"`
 	HttpPath     HttpPath             `json:"httpPath"`
 	Auth         *AuthType            `json:"auth"`
 	Args         []ArgumentDefinition `json:"args"`

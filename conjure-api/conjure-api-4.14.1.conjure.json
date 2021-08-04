@@ -291,6 +291,15 @@
           }
         }
       }, {
+        "fieldName" : "grpc",
+        "type" : {
+          "type" : "reference",
+          "reference" : {
+            "name" : "Grpc",
+            "package" : "com.palantir.conjure.spec"
+          }
+        }
+      }, {
         "fieldName" : "httpPath",
         "type" : {
           "type" : "reference",
@@ -756,6 +765,19 @@
         "value" : "PUT"
       }, {
         "value" : "DELETE"
+      } ]
+    }
+  }, {
+    "type" : "enum",
+    "enum" : {
+      "typeName" : {
+        "name" : "Grpc",
+        "package" : "com.palantir.conjure.spec"
+      },
+      "values" : [ {
+        "value" : "DISABLED"
+      }, {
+        "value" : "ENABLED"
       } ]
     }
   }, {

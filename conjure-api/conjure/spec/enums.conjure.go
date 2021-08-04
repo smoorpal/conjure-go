@@ -150,6 +150,63 @@ func (e *HttpMethod) UnmarshalText(data []byte) error {
 	return nil
 }
 
+type Grpc struct {
+	val Grpc_Value
+}
+
+type Grpc_Value string
+
+const (
+	Grpc_DISABLED Grpc_Value = "DISABLED"
+	Grpc_ENABLED  Grpc_Value = "ENABLED"
+	Grpc_UNKNOWN  Grpc_Value = "UNKNOWN"
+)
+
+// Grpc_Values returns all known variants of Grpc.
+func Grpc_Values() []Grpc_Value {
+	return []Grpc_Value{Grpc_DISABLED, Grpc_ENABLED}
+}
+
+func New_Grpc(value Grpc_Value) Grpc {
+	return Grpc{val: value}
+}
+
+// IsUnknown returns false for all known variants of Grpc and true otherwise.
+func (e Grpc) IsUnknown() bool {
+	switch e.val {
+	case Grpc_DISABLED, Grpc_ENABLED:
+		return false
+	}
+	return true
+}
+
+func (e Grpc) Value() Grpc_Value {
+	if e.IsUnknown() {
+		return Grpc_UNKNOWN
+	}
+	return e.val
+}
+
+func (e Grpc) String() string {
+	return string(e.val)
+}
+
+func (e Grpc) MarshalText() ([]byte, error) {
+	return []byte(e.val), nil
+}
+
+func (e *Grpc) UnmarshalText(data []byte) error {
+	switch v := strings.ToUpper(string(data)); v {
+	default:
+		*e = New_Grpc(Grpc_Value(v))
+	case "DISABLED":
+		*e = New_Grpc(Grpc_DISABLED)
+	case "ENABLED":
+		*e = New_Grpc(Grpc_ENABLED)
+	}
+	return nil
+}
+
 type PrimitiveType struct {
 	val PrimitiveType_Value
 }
